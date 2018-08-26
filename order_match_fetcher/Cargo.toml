@@ -9,7 +9,8 @@ path = "src/lib.rs"
 
 [dependencies]
 futures = "0.1.23"
-tokio = "0.1.7"
+tokio = "0.1.8"
 hyper = { version = "0.12.8", default-features = false, features = ["net2", "futures-cpupool"] }
-#hyper = "0.12.8"
 hyper-tls = "0.3.0"
+tokio-timer = "0.2.6"
+log = "0.4.4"

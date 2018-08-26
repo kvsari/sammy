@@ -9,9 +9,9 @@ use futures::Future;
 fn main() {
     let client = lib::https_client::produce(2).expect("Can't init TLS.");
 
-    let future = lib::kraken::test_fire2(client)
-        .map(|body| println!("Body: {}", &body))
-        .map_err(|e| println!("Error: {}", &e));
+    let future = lib::kraken::poll_trade_history(
+        client.clone(), lib::asset::BTC_USD, lib::kraken::KrakenFetchTargets,
+    );
 
     tokio::run(future);
 }
