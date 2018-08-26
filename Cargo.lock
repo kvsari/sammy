@@ -379,6 +379,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "order_book_fetcher"
+version = "0.1.0"
+
+[[package]]
 name = "order_match_fetcher"
 version = "0.1.0"
 dependencies = [

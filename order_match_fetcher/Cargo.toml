@@ -11,4 +11,5 @@ path = "src/lib.rs"
 futures = "0.1.23"
 tokio = "0.1.7"
 hyper = { version = "0.12.8", default-features = false, features = ["net2", "futures-cpupool"] }
+#hyper = "0.12.8"
 hyper-tls = "0.3.0"

@@ -2,6 +2,7 @@
 use futures::Future;
 use hyper::{Client, Body};
 use hyper_tls::HttpsConnector;
+use tokio;
 
 pub fn test_fire1() {
     let https = HttpsConnector::new(2).expect("TLS init failed.");
@@ -19,5 +20,5 @@ pub fn test_fire1() {
             println!("Error: {}", err);
         });
 
-    future.wait().ok();
+    tokio::run(future)
 }
