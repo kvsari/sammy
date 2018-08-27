@@ -1,5 +1,9 @@
 //! Code
 #[macro_use] extern crate log;
+#[macro_use] extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
+extern crate rust_decimal;
 extern crate futures;
 extern crate hyper;
 extern crate hyper_tls;

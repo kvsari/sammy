@@ -4,47 +4,16 @@ use std::time::Duration;
 use futures::{Future, Stream};
 use hyper::{Client, Body, Uri};
 use hyper_tls::HttpsConnector;
+use serde_json;
 use tokio_timer;
 use tokio;
 
 use asset;
 use super::{HttpsClient, FetchError};
 
-pub fn test_fire1() {
-    let https = HttpsConnector::new(2).expect("TLS init failed.");
-    let client = Client::builder()
-        .build::<_, Body>(https);
+mod model;
 
-    let uri = "https://api.kraken.com/0/public/AssetPairs".parse().unwrap();
-
-    let future = client
-        .get(uri)
-        .map(|res| {
-            println!("Response: {}", res.status());
-        })
-        .map_err(|err| {
-            println!("Error: {}", err);
-        });
-
-    tokio::run(future)
-}
-
-pub fn test_fire2(client: HttpsClient) -> impl Future<Item = String, Error = FetchError> {
-    let uri = "https://api.kraken.com/0/public/AssetPairs".parse().unwrap();
-
-    client
-        .get(uri)
-        .and_then(|res| {
-            println!("Response: {}", res.status());
-            res.into_body().concat2()
-        })
-        .from_err::<FetchError>()
-        .and_then(|body| {
-            let body = String::from_utf8(body.to_vec())?;
-            Ok(body)
-        })
-        .from_err()
-}
+use self::model::{Outer, TradeHistory};
 
 /// Fetch targets. Unit struct for now with hardcoded values. We're just trying to explore
 /// an API. In the future we can instantiate and load in the base paths and other stuff.
@@ -95,18 +64,27 @@ pub fn poll_trade_history(
             client.get(uri)
         })
         .and_then(|res| {
-            // TODO: Handle HTTP error codes here. Right now we're assuming happy path.
-
+            let status = res.status().as_u16();
+            // TODO: Handle errors here.
+            // Handle throttling errors here. Need to back off.
+            /*
+            match status {
+                200 => res.into_body().concat2(),
+                _ => Err(status),
+            }
+             */
             res.into_body().concat2()
         })
         .from_err::<FetchError>()
         .and_then(|body| {
-            let body = String::from_utf8(body.to_vec())?;
-            Ok(body)
+            //let body = String::from_utf8(body.to_vec())?;
+            //Ok(body)
+            let history: Outer<TradeHistory> = serde_json::from_slice(&body)?;
+            Ok(history)
         })
         .then(|result| {
             match result {
-                Ok(body) => println!("Body: {}", &body),
+                Ok(body) => println!("Body: {:?}", &body),
                 Err(e) => println!("Error: {}", &e),
             }
             Ok(())

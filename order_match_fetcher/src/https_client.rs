@@ -1,6 +1,7 @@
 //! Single HTTPS client.
 use std::{fmt, error, convert, string};
 
+use serde_json;
 use hyper::{self, Client, Body, client::HttpConnector};
 use hyper_tls::{HttpsConnector, Error};
 
@@ -13,15 +14,19 @@ pub fn produce(threads: usize) -> Result<HttpsClient, Error> {
 
 #[derive(Debug)]
 pub enum FetchError {
-    Http(hyper::Error),
+    Client(hyper::Error),
+    Status(u16),
     Utf8(string::FromUtf8Error),
+    SerdeJson(serde_json::Error),
 }
 
 impl fmt::Display for FetchError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            FetchError::Http(err) => write!(f, "HTTP fail: {}", &err),
+            FetchError::Client(err) => write!(f, "Client fail: {}", &err),
+            FetchError::Status(err) => write!(f, "HTTP status code: {}", &err),
             FetchError::Utf8(err) => write!(f, "Response body invalid UTF8: {}", &err),
+            FetchError::SerdeJson(err) => write!(f, "JSON serde error: {}", &err),
         }
     }
 }
@@ -33,20 +38,34 @@ impl error::Error for FetchError {
 
     fn cause(&self) -> Option<&error::Error> {
         match self {
-            FetchError::Http(ref err) => Some(err),
+            FetchError::Client(ref err) => Some(err),
+            FetchError::Status(_) => None,
             FetchError::Utf8(ref err) => Some(err),
+            FetchError::SerdeJson(ref err) => Some(err),
         }
     }
 }
 
 impl convert::From<hyper::Error> for FetchError {
     fn from(e: hyper::Error) -> Self {
-        FetchError::Http(e)
+        FetchError::Client(e)
     }
 }
 
 impl convert::From<string::FromUtf8Error> for FetchError {
     fn from(e: string::FromUtf8Error) -> Self {
         FetchError::Utf8(e)
+    }
+}
+
+impl convert::From<u16> for FetchError {
+    fn from(e: u16) -> Self {
+        FetchError::Status(e)
+    }
+}
+
+impl convert::From<serde_json::Error> for FetchError {
+    fn from(e: serde_json::Error) -> Self {
+        FetchError::SerdeJson(e)
     }
 }
