@@ -13,5 +13,6 @@ extern crate tokio_timer;
 pub mod https_client;
 pub mod asset;
 pub mod kraken;
+pub mod exchange;
 
 pub use self::https_client::{HttpsClient, FetchError};
