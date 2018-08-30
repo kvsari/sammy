@@ -3,4 +3,13 @@ name = "translator"
 version = "0.1.0"
 authors = ["Stephan Luther <kvsari@gmail.com>"]
 
+[lib]
+name = "translator_lib"
+path = "src/lib.rs"
+
 [dependencies]
+log = "0.4.4"
+env_logger = "0.5.13"
+actix-web = "0.7.4"
+actix = "0.7.4"
+dotenv = "0.13.0"
