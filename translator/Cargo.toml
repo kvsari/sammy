@@ -13,3 +13,6 @@ env_logger = "0.5.13"
 actix-web = "0.7.4"
 actix = "0.7.4"
 dotenv = "0.13.0"
+
+# Internal sammy project crates
+common = { path = "../common" }

@@ -56,7 +56,7 @@ mediaType: application/json
                   "properties": {
                     "items": {
                       "type":"array",
-                      "elemt":"string"
+                      "elem":"string"
                     }
                   },
                   "required":["items"],
@@ -87,7 +87,7 @@ mediaType: application/json
                 example: |
                   ["kraken"]
       /{exchange}:
-        post:
+        put:
           description: Input new trade history data.
           body:
             application/json:
@@ -128,42 +128,13 @@ mediaType: application/json
                 application/json:
                   type: |
                     {
-                      "type":"array",
+                      "type":"object",
                       "$schema": "http://json-schema.org/draft-04/schema",
-                      "definitions": {
-                        "inserted": {
-                          "type":"object",
-                          "properties":{
-                            "id": {"type":"integer"},
-                            "timestamp": {
-                              "type":"string",
-                              "format":"datetime-only",
-                              "description":"Time at which the record was stored."
-                            }
-                          },
-                          "required":["id", "timestamp"],
-                          "additionalProperties":false
-                        },
-                        "rejected": {
-                          "type":"object",
-                          "properties": {
-                            "reason":{"type":"string"}
-                          },
-                          "required":["reason"],
-                          "additionalProperties":false
-                        }
-                      },
                       "properties": {
-                        "items": {
-                          "type":"array",
-                          "elem":{
-                            "oneOf": [
-                                { "$ref": "#/definitions/inserted" },
-                                { "$ref": "#/definitions/rejected" }
-                            ]
-                          }
+                        "received": {
+                          "type":"integer"
                         }
                       },
-                      "required":["items"],
+                      "required":["received"],
                       "additionalProperties":false
                     }

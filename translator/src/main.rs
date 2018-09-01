@@ -9,11 +9,9 @@ extern crate translator_lib as lib;
 
 use actix_web::{server::HttpServer, App, HttpRequest, http::Method};
 
-mod config;
+use lib::restful;
 
-fn yo(_req: &HttpRequest) -> &'static str {
-    "Yo"
-}
+mod config;
 
 fn main() {
     dotenv::dotenv().ok();
@@ -27,11 +25,19 @@ fn main() {
 
     HttpServer::new(move || {
         App::with_state(rest_state)
-            //.resource("/", |r| r.f(yo))
             .scope("/trade_history", |scope| {
                 scope
                     .resource("", |r| {
-                        r.method(Method::GET).f(lib::restful::trade_match_root)
+                        r.method(Method::GET).f(restful::trade_match_root)
+                    })
+                    .resource("/{left_asset}", |r| {
+                        r.method(Method::GET).f(restful::trade_match_left_asset)
+                    })
+                    .resource("/{left_asset}/{right_asset}", |r| {
+                        r.method(Method::GET).f(restful::trade_match_asset_pair)
+                    })
+                    .resource("/{left_asset}/{right_asset}/{exchange}", |r| {
+                        r.method(Method::PUT).f(restful::trade_match_put)
                     })
             })
     })
