@@ -61,6 +61,7 @@ macro_rules! asset_pair {
 }
 
 asset_pair!(BTC_USD, Asset::BTC, Asset::USD);
+asset_pair!(ETH_USD, Asset::ETH, Asset::USD);
 
 #[derive(Debug, Copy, Clone)]
 pub struct ParseAssetError;

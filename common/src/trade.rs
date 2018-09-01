@@ -1,4 +1,6 @@
 //! Trade history models.
+use std::{error, fmt, str};
+
 use rust_decimal::Decimal;
 use chrono::{DateTime, Utc};
 
@@ -8,6 +10,69 @@ use chrono::{DateTime, Utc};
 pub enum Market {
     Maker,
     Taker,
+}
+
+impl str::FromStr for Market {
+    type Err = MarketParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "b" | "B" | "buy" | "BUY" | "t" | "T" | "taker" | "TAKER" => Ok(Market::Taker),
+            "s" | "S" | "sell" | "SELL" | "m" | "M" | "maker" | "MAKER" => {
+                Ok(Market::Maker)
+            },
+            _ => Err(MarketParseError),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct MarketParseError;
+
+impl fmt::Display for MarketParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error parsing market.")
+    }
+}
+
+impl error::Error for MarketParseError {
+    fn description(&self) -> &str {
+        "Error parsing market."
+    }
+}
+
+/// What kind of trade it was. Whether is was a limit order or a market order.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum Type {
+    Limit,
+    Market,
+}
+
+impl str::FromStr for Type {
+    type Err = TradeTypeParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "l" | "L" | "limit" | "LIMIT" => Ok(Type::Limit),
+            "m" | "M" | "market" | "MARKET" => Ok(Type::Market),
+            _ => Err(TradeTypeParseError),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct TradeTypeParseError;
+
+impl fmt::Display for TradeTypeParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Error parsing trade type.")
+    }
+}
+
+impl error::Error for TradeTypeParseError {
+    fn description(&self) -> &str {
+        "Error parsing trade type."
+    }
 }
 
 /// Common trade history item that is used by various components and thus transmitted. Needs
@@ -22,10 +87,23 @@ pub struct TradeHistoryItem {
     size: Decimal,
     price: Decimal,
     market: Market,
+    trade: Type,
     //meta: String,
 }
 
 impl TradeHistoryItem {
+    pub fn new(
+        timestamp: DateTime<Utc>,
+        size: Decimal,
+        price: Decimal,
+        market: Market,
+        trade: Type,
+    ) -> Self {
+        TradeHistoryItem {
+            timestamp, size, price, market, trade
+        }
+    }
+    
     pub fn timestamp(&self) -> DateTime<Utc> {
         self.timestamp
     }
@@ -41,5 +119,8 @@ impl TradeHistoryItem {
     pub fn market(&self) -> Market {
         self.market
     }
-}
 
+    pub fn trade(&self) -> Type {
+        self.trade
+    }
+}

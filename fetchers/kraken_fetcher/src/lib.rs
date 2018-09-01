@@ -1,5 +1,6 @@
 //! Code
 #[macro_use] extern crate log;
+#[macro_use] extern crate lazy_static;
 #[macro_use] extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
@@ -9,12 +10,16 @@ extern crate hyper;
 extern crate hyper_tls;
 extern crate tokio;
 extern crate tokio_timer;
+extern crate num_traits;
+extern crate chrono;
 
 extern crate common;
 
 pub mod https_client;
 pub mod fetch;
+pub mod place;
 pub mod targets;
+mod conversion;
 mod model;
 
 pub use self::https_client::{HttpsClient, FetchError};
