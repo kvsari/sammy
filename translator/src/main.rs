@@ -5,7 +5,9 @@ extern crate dotenv;
 extern crate actix;
 extern crate actix_web;
 
-use actix_web::{server::HttpServer, App, HttpRequest};
+extern crate translator_lib as lib;
+
+use actix_web::{server::HttpServer, App, HttpRequest, http::Method};
 
 mod config;
 
@@ -21,9 +23,17 @@ fn main() {
 
     let system = actix::System::new("Translator");
 
-    HttpServer::new(|| {
-        App::new()
-            .resource("/", |r| r.f(yo))
+    let rest_state = lib::restful::State;
+
+    HttpServer::new(move || {
+        App::with_state(rest_state)
+            //.resource("/", |r| r.f(yo))
+            .scope("/trade_history", |scope| {
+                scope
+                    .resource("", |r| {
+                        r.method(Method::GET).f(lib::restful::trade_match_root)
+                    })
+            })
     })
         .bind(config.listen())
         .expect("Can't bind address.")
