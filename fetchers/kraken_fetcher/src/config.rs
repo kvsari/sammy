@@ -1,8 +1,7 @@
 //! Configuration sourcing
 use std::{env, error, fmt, convert, str};
 
-use lib::exchange::Exchange;
-use lib::asset;
+use common::asset;
 
 static ASSET_PAIR: &str = "KRAKEN_ASSET_PAIR";
 static MODE: &str = "KRAKEN_FETCH_MODE";

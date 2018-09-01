@@ -629,6 +629,7 @@ dependencies = [
 name = "kraken_fetcher"
 version = "0.1.0"
 dependencies = [
+ "common 0.1.0",
  "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.5.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.23 (registry+https://github.com/rust-lang/crates.io-index)",

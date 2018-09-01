@@ -5,6 +5,8 @@ extern crate futures;
 extern crate tokio;
 extern crate dotenv;
 
+extern crate common;
+
 extern crate kraken_fetcher_lib as lib;
 
 use futures::Future;
@@ -23,8 +25,8 @@ fn main() {
     let future = match config.fetch_mode() {
         config::FetchMode::TradeHistory => {
             debug!("Trade history fetching chosen.");
-            Either::A(lib::kraken::poll_trade_history(
-                client.clone(), lib::asset::BTC_USD, lib::kraken::KrakenFetchTargets,
+            Either::A(lib::poll_trade_history(
+                client.clone(), common::asset::BTC_USD, lib::KrakenFetchTargets,
             ))
         },
         config::FetchMode::OrderBook => {

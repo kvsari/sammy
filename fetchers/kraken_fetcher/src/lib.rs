@@ -10,9 +10,13 @@ extern crate hyper_tls;
 extern crate tokio;
 extern crate tokio_timer;
 
+extern crate common;
+
 pub mod https_client;
-pub mod asset;
-pub mod kraken;
-pub mod exchange;
+pub mod fetch;
+pub mod targets;
+mod model;
 
 pub use self::https_client::{HttpsClient, FetchError};
+pub use self::fetch::poll_trade_history;
+pub use self::targets::KrakenFetchTargets;

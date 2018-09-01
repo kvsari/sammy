@@ -5,6 +5,8 @@ extern crate rust_decimal;
 extern crate chrono;
 
 pub mod trade;
+pub mod exchange;
+pub mod asset;
 
 #[cfg(test)]
 mod tests {
