@@ -20,22 +20,22 @@ fn main() {
     let config = config::config_from_environment().expect("Can't load config.");
     debug!("Configuration: {:?}", &config);
     
-    let client = lib::https_client::produce(2).expect("Can't init TLS.");
+    let fetch_client = lib::https_client::produce(1).expect("Can't init TLS.");
+    let put_client = lib::https_client::produce(1).expect("Can't init TLS.");
 
     let future = match config.fetch_mode() {
         config::FetchMode::TradeHistory => {
             debug!("Trade history fetching chosen.");
 
             let raw_fetch_stream = lib::poll_trade_history2(
-                client.clone(), common::asset::BTC_USD, lib::KrakenFetchTargets,
+                fetch_client.clone(), common::asset::BTC_USD, lib::KrakenFetchTargets,
             );
-
             let filtered_fetch_stream = lib::filter_benign_errors(raw_fetch_stream);
-
             let converted_stream = lib::convert_into_common(filtered_fetch_stream);
-
-            let future = converted_stream.for_each(|history| {
-                println!("History: {:?}", &history);
+            let place_stream = lib::put_trade_history(put_client.clone(), converted_stream);
+            let future = place_stream.for_each(|()| {
+                //println!("Placed history: {:?}", &history);
+                println!("Placed items.");
                 Ok(())
             });
             
