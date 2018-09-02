@@ -3,6 +3,7 @@ use std::{env, error, fmt, convert, str};
 
 use common::asset;
 
+static TRANSLATOR: &str = "SAMMY_TRANSLATOR";
 static ASSET_PAIR: &str = "KRAKEN_ASSET_PAIR";
 static MODE: &str = "KRAKEN_FETCH_MODE";
 
@@ -28,6 +29,7 @@ impl str::FromStr for FetchMode {
 pub struct Configuration {
     asset_pair: asset::Pair,
     fetch_mode: FetchMode,
+    translator: String,
 }
 
 impl Configuration {
@@ -38,15 +40,21 @@ impl Configuration {
     pub fn fetch_mode(&self) -> FetchMode {
         self.fetch_mode
     }
+
+    pub fn translator(&self) -> &str {
+        self.translator.as_str()
+    }
 }
 
 pub fn config_from_environment() -> Result<Configuration, ConfigError> {
     let asset_pair = env::var(ASSET_PAIR).map_err(|e| (ASSET_PAIR, e))?;
     let fetch_mode = env::var(MODE).map_err(|e| (MODE, e))?;
+    let translator = env::var(TRANSLATOR).map_err(|e| (TRANSLATOR, e))?;
 
     Ok(Configuration {
         asset_pair: asset_pair.parse().map_err(|e| (ASSET_PAIR, e))?,
         fetch_mode: fetch_mode.parse()?,
+        translator: translator,
     })
 }
 

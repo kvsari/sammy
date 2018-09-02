@@ -9,17 +9,34 @@ pub enum Asset {
     BNB,
 }
 
+impl Asset {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Asset::BTC => "BTC",
+            Asset::ETH => "ETH",
+            Asset::USD => "USD",
+            Asset::BNB => "BNB",
+        }
+    }
+}
+
 impl str::FromStr for Asset {
     type Err = ParseAssetError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_uppercase().as_ref() {
-            "BTC" => Ok(Asset::BTC),
-            "ETH" => Ok(Asset::ETH),
-            "USD" => Ok(Asset::USD),
-            "BNB" => Ok(Asset::BNB),
+        match s {
+            "BTC" | "btc" => Ok(Asset::BTC),
+            "ETH" | "eth" => Ok(Asset::ETH),
+            "USD" | "usd" => Ok(Asset::USD),
+            "BNB" | "bnb" => Ok(Asset::BNB),
             _ => Err(ParseAssetError),
         }
+    }
+}
+
+impl fmt::Display for Asset {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -47,8 +64,10 @@ impl str::FromStr for Pair {
     type Err = ParseAssetError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_uppercase().as_ref() {
-            "BTCUSD" | "BTC_USD" | "BTC/USD" => Ok(BTC_USD),
+        match s {
+            "BTCUSD" | "BTC_USD" | "BTC/USD" | "btcusd" | "btc_usd" | "btc/usd" => {
+                Ok(BTC_USD)
+            },
             _ => Err(ParseAssetError),
         }
     }
