@@ -6,11 +6,12 @@ use futures::future::FutureResult;
 use serde_json;
 use tokio_timer;
 
-use common::asset;
+use common::{asset, trade};
 
 use super::KrakenFetchTargets;
 use super::{HttpsClient, FetchError};
 use model::{Outer, TradeHistory};
+use conversion::trade_history;
 
 /// Return future that polls the trade history. Only polls for a single asset pair.
 ///
@@ -84,6 +85,10 @@ pub fn poll_trade_history2(
         .then(move |_| {
             let uri = targets.trade_history(pair, since)
                 .expect("Invalid asset pair. TODO: Return error here.");
+
+            // Can have a receiver here to get the results from the previous request
+            // and back off if there was a throttle warning. The sent future can be
+            // wrapped in an option and filtered.
             
             client.get(uri)
         })
@@ -91,6 +96,9 @@ pub fn poll_trade_history2(
             let status = res.status().as_u16();
             // TODO: Handle errors here.
             // Handle throttling errors here. Need to back off.
+            //
+            // Can use a channel to call back to the previous future and tell it to back off
+            // for a while.
             /*
             match status {
                 200 => res.into_body().concat2(),
@@ -156,4 +164,18 @@ pub fn filter_benign_errors(
                 Err(())
             }
         })
+}
+
+/// Takes a filtered fetch stream and converts it into the common format for placement into
+/// other systems, likely the translator.
+pub fn convert_into_common(
+    input: impl Stream<Item = TradeHistory, Error = ()>
+) -> impl Stream<Item = Vec<trade::TradeHistoryItem>, Error = ()> {
+    input.and_then(|history| {
+        trade_history(&history).map_err(|e| {
+            error!("Failure to convert into common format: {}", &e);
+            // TODO: Should we continue with the stream? For now we consider this error
+            //       terminal (perhaps the kraken API has changed?) and we exit the stream.
+        })
+    })
 }

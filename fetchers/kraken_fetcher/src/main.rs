@@ -32,7 +32,9 @@ fn main() {
 
             let filtered_fetch_stream = lib::filter_benign_errors(raw_fetch_stream);
 
-            let future = filtered_fetch_stream.for_each(|history| {
+            let converted_stream = lib::convert_into_common(filtered_fetch_stream);
+
+            let future = converted_stream.for_each(|history| {
                 println!("History: {:?}", &history);
                 Ok(())
             });

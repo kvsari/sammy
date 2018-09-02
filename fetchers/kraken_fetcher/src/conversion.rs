@@ -10,7 +10,7 @@ use common::trade;
 use model::{TradeHistory, TradeMatchItem};
 
 lazy_static! {
-    static ref NANOS_MUL: Decimal =  10_000_000_000_u64.into();
+    static ref NANOS_MUL: Decimal =  1_000_000_000_u64.into();
 }
 
 /// Convert the internal kraken trade match history model into the common model. This is
@@ -95,7 +95,9 @@ pub fn trade_history(
 
 #[cfg(test)]
 mod tests {
-    use serde_json;
+    use std::str::FromStr;
+    
+    use serde_json;    
 
     use model::Items;
     use super::*;
@@ -106,7 +108,7 @@ mod tests {
             vec![
                 TradeMatchItem::Text("10".to_owned()),
                 TradeMatchItem::Text("1".to_owned()),
-                TradeMatchItem::Timestamp(1535271158.into()),
+                TradeMatchItem::Timestamp(Decimal::from_str("123456.1234").unwrap()),
                 TradeMatchItem::Text("b".to_owned()),
                 TradeMatchItem::Text("m".to_owned()),
                 TradeMatchItem::Text(String::new()),

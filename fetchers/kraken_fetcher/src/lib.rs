@@ -28,4 +28,5 @@ pub use self::fetch::{
     poll_trade_history,
     poll_trade_history2,
     filter_benign_errors,
+    convert_into_common,
 };
