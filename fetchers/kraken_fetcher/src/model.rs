@@ -83,6 +83,10 @@ impl<T: Inner + Clone + Debug> Outer<T> {
     fn result(&self) -> Option<&T> {
         self.result.as_ref()
     }
+
+    pub fn consume(self) -> (Vec<String>, Option<T>) {
+        (self.error, self.result)
+    }
 }
 
 #[cfg(test)]
@@ -93,7 +97,7 @@ mod tests {
     
     static TRADE_HISTORY_BTC_USD_JSON: &str = r##"{"error":[],"result":{"XXBTZUSD":[["6650.00000","0.00100000",1535271158.4026,"b","m",""],["6650.00000","0.19900000",1535271158.4217,"b","m",""],["6650.00000","0.10000000",1535271158.4299,"b","m",""]],"last":"1535290179989384853"}}"##;
 
-        static TRADE_HISTORY_ETH_USD_JSON: &str = r##"{"error":[],"result":{"XETHZUSD":[["6650.00000","0.00100000",1535271158.4026,"b","m",""],["6650.00000","0.19900000",1535271158.4217,"b","m",""],["6650.00000","0.10000000",1535271158.4299,"b","m",""]],"last":"1535290179989384853"}}"##;
+    static TRADE_HISTORY_ETH_USD_JSON: &str = r##"{"error":[],"result":{"XETHZUSD":[["6650.00000","0.00100000",1535271158.4026,"b","m",""],["6650.00000","0.19900000",1535271158.4217,"b","m",""],["6650.00000","0.10000000",1535271158.4299,"b","m",""]],"last":"1535290179989384853"}}"##;
 
     #[test]
     fn deserialize_trade_history() {

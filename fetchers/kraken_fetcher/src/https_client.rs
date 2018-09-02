@@ -69,3 +69,6 @@ impl convert::From<serde_json::Error> for FetchError {
         FetchError::SerdeJson(e)
     }
 }
+
+//#[derive(Debug)]
+//pub enum PlaceError;

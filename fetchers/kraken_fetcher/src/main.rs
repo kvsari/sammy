@@ -9,7 +9,7 @@ extern crate common;
 
 extern crate kraken_fetcher_lib as lib;
 
-use futures::Future;
+use futures::{Stream, Future};
 use futures::future::{Either, lazy, result, FutureResult};
 
 mod config;
@@ -25,9 +25,19 @@ fn main() {
     let future = match config.fetch_mode() {
         config::FetchMode::TradeHistory => {
             debug!("Trade history fetching chosen.");
-            Either::A(lib::poll_trade_history(
+
+            let raw_fetch_stream = lib::poll_trade_history2(
                 client.clone(), common::asset::BTC_USD, lib::KrakenFetchTargets,
-            ))
+            );
+
+            let filtered_fetch_stream = lib::filter_benign_errors(raw_fetch_stream);
+
+            let future = filtered_fetch_stream.for_each(|history| {
+                println!("History: {:?}", &history);
+                Ok(())
+            });
+            
+            Either::A(future)
         },
         config::FetchMode::OrderBook => {
             debug!("Order book fetching chosen.");
