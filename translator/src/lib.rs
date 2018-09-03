@@ -12,4 +12,4 @@ extern crate futures;
 extern crate common;
 
 pub mod restful;
-mod filter;
+pub mod filter;

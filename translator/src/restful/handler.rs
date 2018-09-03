@@ -1,6 +1,8 @@
 //! Handlers for the RESTful resources
 use futures::{Stream, Future, future};
-use actix_web::{HttpRequest, HttpResponse, HttpMessage, Responder, error, AsyncResponder};
+use actix_web::{
+    HttpRequest, HttpResponse, HttpMessage, Responder, error, AsyncResponder, http,
+};
 use bytes::BytesMut;
 use serde_json;
 
@@ -9,6 +11,7 @@ use common::exchange::Exchange;
 use common::asset::{self, Asset};
 
 use super::State;
+use filter::UnfilteredTradeHistory;
 
 const PAYLOAD_4MB: usize = 4194304;
 
@@ -107,7 +110,9 @@ pub fn trade_match_put(
     // TODO
     // Validate that the exchange/asset_pair is valid.
 
-    // Now grab the raw JSON data.
+    let k_filter = req.state().kraken_filter().clone();
+
+    // Now grab the raw JSON data and deal with it.
     req.payload()
         .from_err()
         .fold(BytesMut::new(), move |mut body, chunk| {
@@ -123,16 +128,33 @@ pub fn trade_match_put(
             // Then we deserialize it.
             let history: Vec<TradeHistoryItem> = serde_json::from_slice(&body)?;
 
+            Ok(history)
+        })
+        .and_then(move |history| {
             // Count the number of records (we'll return the count in the response).
             let count = history.len();
 
-            // TODO
             // Forward the deserialized data off to the filter.
-            println!("Received: {:?}", &history);
-
-            // Return the count of records received to the client.
-            let received = TradeHistoryResponse::new(count as u64);
-            Ok(HttpResponse::Ok().json(received))
+            let message = UnfilteredTradeHistory::new(asset_pair, history);
+            k_filter
+                .send(message)
+                .then(move |result| match result {
+                    Ok(Ok(())) => {
+                        // Return the count of records received to the client.
+                        let received = TradeHistoryResponse::new(count as u64);
+                        Ok(HttpResponse::Ok().json(received))
+                    },
+                    Ok(Err(e)) => {
+                        // Error from actor
+                        // TODO: Make the origin clearer. And log!
+                        Ok(HttpResponse::InternalServerError().finish())
+                    },
+                    Err(e) => {
+                        // Error with Actix
+                        // TODO: Make the origin clearer. And log!
+                        Ok(HttpResponse::InternalServerError().finish())
+                    },
+                })
         })
         .responder()
 }

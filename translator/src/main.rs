@@ -7,9 +7,10 @@ extern crate actix_web;
 
 extern crate translator_lib as lib;
 
-use actix_web::{server::HttpServer, App, HttpRequest, http::Method};
+use actix::Actor;
+use actix_web::{server::HttpServer, App, http::Method};
 
-use lib::restful;
+use lib::{restful, filter};
 
 mod config;
 
@@ -21,10 +22,13 @@ fn main() {
 
     let system = actix::System::new("Translator");
 
-    let rest_state = lib::restful::State;
+    let kraken_filter = filter::KrakenTradeHistory::new();
+    let kf_addr = kraken_filter.start();
+
+    let rest_state = lib::restful::State::new(kf_addr);
 
     HttpServer::new(move || {
-        App::with_state(rest_state)
+        App::with_state(rest_state.clone())
             .scope("/trade_history", |scope| {
                 scope
                     .resource("", |r| {
