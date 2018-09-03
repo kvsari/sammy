@@ -10,8 +10,8 @@ impl str::FromStr for Exchange {
     type Err = ParseExchangeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_uppercase().as_ref() {
-            "KRAKEN" => Ok(Exchange::Kraken),
+        match s {
+            "kraken" | "KRAKEN" => Ok(Exchange::Kraken),
             _ => Err(ParseExchangeError),
         }
     }
