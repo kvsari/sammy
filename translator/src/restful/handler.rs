@@ -139,15 +139,11 @@ pub fn trade_match_put(
             k_filter
                 .send(message)
                 .then(move |result| match result {
-                    Ok(Ok(())) => {
+                    Ok(()) => {
+                        println!("Returning!");
                         // Return the count of records received to the client.
                         let received = TradeHistoryResponse::new(count as u64);
                         Ok(HttpResponse::Ok().json(received))
-                    },
-                    Ok(Err(e)) => {
-                        // Error from actor
-                        // TODO: Make the origin clearer. And log!
-                        Ok(HttpResponse::InternalServerError().finish())
                     },
                     Err(e) => {
                         // Error with Actix

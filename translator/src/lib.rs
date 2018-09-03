@@ -1,9 +1,9 @@
 //! Code
 #[macro_use] extern crate log;
 #[macro_use] extern crate serde_derive;
+#[macro_use] extern crate actix;
 extern crate serde;
 extern crate serde_json;
-extern crate actix;
 extern crate actix_web;
 extern crate bytes;
 extern crate chrono;
