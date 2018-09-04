@@ -4,10 +4,14 @@ use std::io;
 
 use futures::Future;
 use futures::future::{self, lazy, FutureResult};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, TimeZone};
 use actix::prelude::*;
 
 use common::{asset, trade};
+
+lazy_static! {
+    static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 0, 0).and_hms(0, 0, 0);
+}
 
 #[derive(Message)]
 pub struct UnfilteredTradeHistory {
@@ -74,8 +78,8 @@ impl Handler<UnfilteredTradeHistory> for KrakenTradeHistory {
                 .send(message)
                 .then(|result| {
                     match result {
-                        Ok(()) => println!("Sent internally"),
-                        Err(e) => println!("Internal error!"),
+                        Ok(()) => (),
+                        Err(e) => error!("Couldn't send internally: {}", &e),
                     }
                     Ok(())
                 })
@@ -87,9 +91,19 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
     type Result = ();
 
     fn handle(&mut self, msg: ToFilterTradeHistory, ctx: &mut Self::Context) {
-        println!("Alright! Time to sleep...");
-        ::std::thread::sleep_ms(5000);
-        println!("Finished sleeping.");
+        let asset_pair = msg.asset_pair;
+        let mut history = msg.history;
         
+        let ts = *self.timestamp_marker.get(&asset_pair).unwrap_or(&YR2000);
+
+        history.retain(move |item| item.timestamp() > ts);
+
+        // Only process further if there's data.
+        if let Some(item) = history.last().map(|i| *i) {
+            self.timestamp_marker.insert(asset_pair, item.timestamp());
+
+            // TODO
+            // Send off to the term builder
+        }
     }
 }
