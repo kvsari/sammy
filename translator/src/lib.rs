@@ -10,6 +10,7 @@ extern crate bytes;
 extern crate chrono;
 extern crate futures;
 extern crate rust_decimal;
+extern crate tokio_timer;
 
 extern crate common;
 
