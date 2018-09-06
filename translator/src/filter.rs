@@ -9,6 +9,8 @@ use actix::prelude::*;
 
 use common::{asset, trade};
 
+use ticker;
+
 lazy_static! {
     static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 0, 0).and_hms(0, 0, 0);
 }
@@ -38,12 +40,14 @@ struct ToFilterTradeHistory {
 /// forwarded on through the system.
 pub struct KrakenTradeHistory {
     timestamp_marker: HashMap<asset::Pair, DateTime<Utc>>,
+    ticker: Addr<ticker::TickGenerator>,
 }
 
 impl KrakenTradeHistory {
-    pub fn new() -> Self {
+    pub fn new(ticker: Addr<ticker::TickGenerator>) -> Self {
         KrakenTradeHistory {
             timestamp_marker: HashMap::new(),
+            ticker: ticker,
         }
     }
 }
@@ -101,9 +105,9 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
         // Only process further if there's data.
         if let Some(item) = history.last().map(|i| *i) {
             self.timestamp_marker.insert(asset_pair, item.timestamp());
-
+            trace!("There's new kraken trade history data. Sending to ticker generator.");
             // TODO
-            // Send off to the term builder
+            // Send off to the tick generator
         }
     }
 }

@@ -10,7 +10,7 @@ extern crate translator_lib as lib;
 use actix::Actor;
 use actix_web::{server::HttpServer, App, http::Method};
 
-use lib::{restful, filter};
+use lib::{restful, filter, ticker};
 
 mod config;
 
@@ -22,7 +22,10 @@ fn main() {
 
     let system = actix::System::new("Translator");
 
-    let kraken_filter = filter::KrakenTradeHistory::new();
+    let tick_generator = ticker::TickGenerator::new();
+    let tg_addr = tick_generator.start();
+
+    let kraken_filter = filter::KrakenTradeHistory::new(tg_addr);
     let kf_addr = kraken_filter.start();
 
     let rest_state = lib::restful::State::new(kf_addr);
