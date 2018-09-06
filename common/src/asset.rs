@@ -73,6 +73,12 @@ impl str::FromStr for Pair {
     }
 }
 
+impl fmt::Display for Pair {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}/{}", self.left.as_str(), self.right.as_str())
+    }
+}
+
 macro_rules! asset_pair {
     ($name:ident, $left:expr, $right:expr) => {
         pub const $name: Pair = Pair { left: $left, right: $right };

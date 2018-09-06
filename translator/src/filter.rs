@@ -7,12 +7,12 @@ use futures::future::{self, lazy, FutureResult};
 use chrono::{DateTime, Utc, TimeZone};
 use actix::prelude::*;
 
-use common::{asset, trade};
+use common::{asset, trade, exchange};
 
 use ticker;
 
 lazy_static! {
-    static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 0, 0).and_hms(0, 0, 0);
+    static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
 }
 
 #[derive(Message)]
@@ -105,9 +105,20 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
         // Only process further if there's data.
         if let Some(item) = history.last().map(|i| *i) {
             self.timestamp_marker.insert(asset_pair, item.timestamp());
-            trace!("There's new kraken trade history data. Sending to ticker generator.");
-            // TODO
+            trace!(
+                "{} new {} kraken trade history item(s). Sending to ticker generator.",
+                &asset_pair,
+                &history.len(),
+            );
+            
             // Send off to the tick generator
+            let data = ticker::RawTradeData::new(
+                exchange::Exchange::Kraken, asset_pair, history
+            );
+            let send_future = self.ticker.send(data)
+                .map_err(|e| error!("Can't send to ticker generator! {}", &e));
+
+            Arbiter::spawn(send_future);
         }
     }
 }

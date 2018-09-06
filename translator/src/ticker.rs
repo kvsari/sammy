@@ -25,7 +25,7 @@ fn closest_quarter(instant: Instant, datetime: DateTime<Utc>) -> Instant {
     let day = datetime.ordinal();
     let year = datetime.year();
 
-    println!("Minute: {}, Hour: {}, Day: {}, Year: {}", &minute, &hour, &day, &year);
+    //println!("Minute: {}, Hour: {}, Day: {}, Year: {}", &minute, &hour, &day, &year);
 
     // Our time, at the next quarter on the hour.
     let fifteen = match () {
@@ -79,7 +79,7 @@ fn closest_quarter(instant: Instant, datetime: DateTime<Utc>) -> Instant {
         }
     };
 
-    println!("DateTime: {} \nFifteen : {}", &datetime, &fifteen);
+    //println!("DateTime: {} \nFifteen : {}", &datetime, &fifteen);
 
     let n_datetime = datetime.naive_utc();
     let n_fifteen = fifteen.naive_utc();
@@ -139,7 +139,7 @@ impl Actor for TickGenerator {
             .and_then(move |i| {
                 // send the it's time message to itself.
                 self_addr.send(ItsTime)
-                    .map_err(|e| error!("Can't send it's time event: {}", &e))
+                    .map_err(|e| error!("Can't send the `it's time` event: {}", &e))
             })
             .for_each(|()| {
                 trace!("Generate tick timing issued.");
@@ -181,5 +181,14 @@ impl RawTradeData {
         RawTradeData {
             exchange, asset_pair, items
         }
+    }
+}
+
+impl Handler<RawTradeData> for TickGenerator {
+    type Result = ();
+
+    fn handle(&mut self, msg: RawTradeData, ctx: &mut Self::Context) {
+        trace!("Received raw {} trade data from: {}", &msg.asset_pair, &msg.exchange);
+        // TODO
     }
 }

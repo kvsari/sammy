@@ -17,6 +17,14 @@ impl str::FromStr for Exchange {
     }
 }
 
+impl fmt::Display for Exchange {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Exchange::Kraken => write!(f, "kraken"),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone)]
 pub struct ParseExchangeError;
 
