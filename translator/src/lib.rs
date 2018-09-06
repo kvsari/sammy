@@ -17,3 +17,4 @@ extern crate common;
 pub mod restful;
 pub mod filter;
 pub mod ticker;
+pub mod database;

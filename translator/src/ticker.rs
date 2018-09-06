@@ -11,6 +11,8 @@ use tokio_timer;
 
 use common::{asset, exchange, trade};
 
+use database::FreshTick;
+
 lazy_static! {
     //static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 15); // 15 minutes
     static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 1); // 1 minute
@@ -92,9 +94,11 @@ fn closest_quarter(instant: Instant, datetime: DateTime<Utc>) -> Instant {
     instant + diff
 }
 
+#[derive(Debug, Copy, Clone)]
 struct PriceSize(Decimal, Decimal);
 
 /// Maintain a running tally of trade history data as it comes in.
+#[derive(Debug, Copy, Clone)]
 struct Accumulation {
     first: PriceSize,
     highest: PriceSize,
@@ -103,9 +107,53 @@ struct Accumulation {
     count: u64,
 }
 
+impl Accumulation {
+    /// Never build a new accumulation without a starting item.
+    fn new(item: &trade::TradeHistoryItem) -> Self {
+        Accumulation {
+            first: PriceSize(item.price(), item.size()),
+            highest: PriceSize(item.price(), item.size()),
+            lowest: PriceSize(item.price(), item.size()),
+            last: PriceSize(item.price(), item.size()),
+            count: 1,
+        }
+    }
+}
+
+struct Accumulator;
+
+impl Accumulator {
+    fn new_accumulation(item: &trade::TradeHistoryItem) -> Accumulation {
+        Accumulation::new(item)
+    }
+
+    /*
+    fn add(accumulation: Accumulation, item: trade::TradeHistoryItem) -> Accumulation {
+    }
+     */
+
+    fn mut_add(accumulation: &mut Accumulation, item: &trade::TradeHistoryItem) {
+        let price = item.price();
+        let size = item.size();
+        
+        match () {
+            _ if price > accumulation.highest.0 => {
+                accumulation.highest = PriceSize(price, size);
+            },
+            _ if price < accumulation.lowest.0 => {
+                accumulation.lowest = PriceSize(price, size);
+            },
+            _ => (),
+        }
+
+        accumulation.last = PriceSize(price, size);
+        accumulation.count += 1;
+    }
+}
+
 /// Message to signal that a tick is to be emitted from the 
 #[derive(Message)]
-struct ItsTime;
+struct ItIsTime;
 
 /// Collates incoming trade history into the right collections (sorted by asset pair and
 /// exchange) and then processes a calculation based on a time span that contains basic
@@ -113,7 +161,7 @@ struct ItsTime;
 pub struct TickGenerator {
     period: Duration,
     p_start: DateTime<Utc>,
-    kraken: HashMap<asset::Pair, Accumulation>,
+    accumulation: HashMap<(exchange::Exchange, asset::Pair), Accumulation>,
 }
 
 impl TickGenerator {
@@ -121,7 +169,7 @@ impl TickGenerator {
         TickGenerator {
             period: *TIME_PERIOD, // grab a local copy for... reasons.
             p_start: Utc::now(),
-            kraken: HashMap::new(),
+            accumulation: HashMap::new(),
         }
     }
 }
@@ -132,13 +180,17 @@ impl Actor for TickGenerator {
     fn started(&mut self, ctx: &mut Context<Self>) {
         let self_addr = ctx.address();
         
+        // Reset the start time to now as this is when the actor is really running. There
+        // could be any number of delays between instantiation and execution after all.
+        self.p_start = Utc::now();       
+        
         // Start the self timing tigger stream future.
-        let start = closest_quarter(Instant::now(), Utc::now());
+        let start = closest_quarter(Instant::now(), self.p_start);
         let timing = tokio_timer::Interval::new(start, self.period)
             .map_err(|e| error!("Problem with timing loop: {}", &e))
             .and_then(move |i| {
-                // send the it's time message to itself.
-                self_addr.send(ItsTime)
+                // send the `it's time` message to itself.
+                self_addr.send(ItIsTime)
                     .map_err(|e| error!("Can't send the `it's time` event: {}", &e))
             })
             .for_each(|()| {
@@ -156,12 +208,44 @@ impl Actor for TickGenerator {
     }
 }
 
-impl Handler<ItsTime> for TickGenerator {
+impl Handler<ItIsTime> for TickGenerator {
     type Result = ();
 
-    fn handle(&mut self, msg: ItsTime, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: ItIsTime, ctx: &mut Self::Context) {
         trace!("It's time to generate a new tick.");
+        
+        let now = Utc::now();
+        let last = self.p_start;
+        
+        // Drain accumulation into batch data set for batch insertion.
+        let batch: Vec<FreshTick> = self.accumulation
+            .drain()
+            .map(|((exchange, asset_pair), accumulation)| {
+                FreshTick::new(
+                    exchange,
+                    asset_pair,
+                    last,
+                    now,
+                    accumulation.first.0,
+                    accumulation.first.1,
+                    accumulation.highest.0,
+                    accumulation.highest.1,
+                    accumulation.lowest.0,
+                    accumulation.lowest.1,
+                    accumulation.last.0,
+                    accumulation.last.1,
+                    accumulation.count as i64,
+                )
+            })
+            .collect();
+
+        println!("Ticks generated: {:?}", &batch);
+
         // TODO
+        // Send batched accumulations to DB actor
+
+        // New tick start time.
+        self.p_start = now;
     }
 }
 
@@ -189,6 +273,30 @@ impl Handler<RawTradeData> for TickGenerator {
 
     fn handle(&mut self, msg: RawTradeData, ctx: &mut Self::Context) {
         trace!("Received raw {} trade data from: {}", &msg.asset_pair, &msg.exchange);
+
+        // Add raw data to accumulation
+        let key = (msg.exchange, msg.asset_pair);
+        self.accumulation
+            .entry(key)
+            .and_modify(|accumulation| {
+                msg.items
+                    .iter()
+                    .for_each(|item| Accumulator::mut_add(accumulation, item));
+            })
+            .or_insert_with(|| {
+                let mut iter = msg.items.iter();
+
+                // There must be at least one item.
+                let item = iter.next().expect("Emtpy raw data sent to ticker generator.");
+                let mut accumulation = Accumulation::new(item);
+
+                // Handle the rest, if any
+                iter.for_each(|item| Accumulator::mut_add(&mut accumulation, item));
+
+                accumulation
+            });
+
         // TODO
+        // Send raw data to DB for storage
     }
 }
