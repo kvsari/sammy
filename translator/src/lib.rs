@@ -13,6 +13,7 @@ extern crate rust_decimal;
 extern crate tokio_timer;
 
 extern crate common;
+extern crate ticker_db;
 
 pub mod restful;
 pub mod filter;

@@ -6,4 +6,5 @@ members = [
 	"translator",
 	"common",
 	"fetchers/kraken_fetcher",
+	"ticker_db",
 ]

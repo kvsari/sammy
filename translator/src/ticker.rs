@@ -10,8 +10,7 @@ use actix::prelude::*;
 use tokio_timer;
 
 use common::{asset, exchange, trade};
-
-use database::FreshTick;
+use ticker_db::model::FreshTick;
 
 lazy_static! {
     //static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 15); // 15 minutes

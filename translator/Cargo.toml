@@ -25,3 +25,4 @@ tokio-timer = "0.2.6"
 
 # Internal sammy project crates
 common = { path = "../common" }
+ticker_db = { path = "../ticker_db" }
