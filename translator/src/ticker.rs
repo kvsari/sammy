@@ -12,9 +12,11 @@ use tokio_timer;
 use common::{asset, exchange, trade};
 use ticker_db::model::FreshTick;
 
+use database;
+
 lazy_static! {
-    //static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 15); // 15 minutes
-    static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 1); // 1 minute
+    static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 15); // 15 minutes
+    //static ref TIME_PERIOD: Duration = Duration::from_secs(60 * 1); // 1 minute
 }
 
 /// Return an instant that is locked to the next quarter in the future. It assumes that the
@@ -161,14 +163,16 @@ pub struct TickGenerator {
     period: Duration,
     p_start: DateTime<Utc>,
     accumulation: HashMap<(exchange::Exchange, asset::Pair), Accumulation>,
+    db_executor: Addr<database::TickDbExecutor>,
 }
 
 impl TickGenerator {
-    pub fn new() -> Self {
+    pub fn new(db_executor: Addr<database::TickDbExecutor>) -> Self {
         TickGenerator {
             period: *TIME_PERIOD, // grab a local copy for... reasons.
             p_start: Utc::now(),
             accumulation: HashMap::new(),
+            db_executor: db_executor,
         }
     }
 }
@@ -233,15 +237,20 @@ impl Handler<ItIsTime> for TickGenerator {
                     accumulation.lowest.1,
                     accumulation.last.0,
                     accumulation.last.1,
-                    accumulation.count as i64,
+                    accumulation.count as i32,
                 )
             })
             .collect();
 
         println!("Ticks generated: {:?}", &batch);
 
-        // TODO
         // Send batched accumulations to DB actor
+        let msg = database::NewTicks(batch);
+        let send_future = self.db_executor
+            .send(msg)
+            .map_err(|e| error!("Couldn't send tick batch to DB executor: {}", &e));
+
+        Arbiter::spawn(send_future);
 
         // New tick start time.
         self.p_start = now;

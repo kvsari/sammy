@@ -1,7 +1,7 @@
 //! DB models and their conversions.
 
 use chrono::{DateTime, Utc};
-use bigdecimal::BigDecimal;
+//use bigdecimal::BigDecimal;
 use rust_decimal::Decimal;
 
 use common::{exchange, asset};
@@ -20,7 +20,7 @@ pub struct FreshTick {
     lowest_size: Decimal,
     last_price: Decimal,
     last_size: Decimal,
-    count: i64,
+    count: i32,
 }
 
 impl FreshTick {
@@ -37,7 +37,7 @@ impl FreshTick {
         lowest_size: Decimal,
         last_price: Decimal,
         last_size: Decimal,
-        count: i64,
+        count: i32,
     ) -> Self {
         FreshTick {
             exchange,
@@ -72,7 +72,7 @@ pub struct Tick {
     lowest_size: Decimal,
     last_price: Decimal,
     last_size: Decimal,
-    count: i64,
+    count: i32,
 }
 
 impl Tick {
@@ -90,7 +90,7 @@ impl Tick {
         lowest_size: Decimal,
         last_price: Decimal,
         last_size: Decimal,
-        count: i64,
+        count: i32,
     ) -> Self {
         Tick {
             id,

@@ -2,15 +2,21 @@
 use std::{env, fmt, error, convert, net};
 
 static LISTEN: &str = "TRANSLATOR_LISTEN_ADDR";
+static DB_URL: &str = "DATABASE_URL";
 
 #[derive(Debug)]
 pub struct Configuration {
     listen: net::SocketAddr,
+    database_url: String,
 }
 
 impl Configuration {
     pub fn listen(&self) -> net::SocketAddr {
         self.listen
+    }
+
+    pub fn database_url(&self) -> &str {
+        self.database_url.as_str()
     }
 }
 
@@ -19,6 +25,7 @@ pub fn config_from_environment() -> Result<Configuration, ConfigError> {
     
     Ok(Configuration {
         listen: listen.parse().map_err(|e| (LISTEN, e))?,
+        database_url: env::var(DB_URL).map_err(|e| (DB_URL, e))?,
     })
 }
 

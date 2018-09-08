@@ -3,18 +3,21 @@ use std::{convert, fmt, error};
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
-use diesel::{Connection, RunQueryDsl};
+use diesel::{self, Connection, RunQueryDsl};
 use diesel::result::{self, ConnectionError};
 use diesel::pg::PgConnection;
-use chrono::{NaiveDateTime};
+use chrono::{NaiveDateTime, DateTime, Utc};
 use bigdecimal::{BigDecimal, ParseBigDecimalError};
+use rust_decimal;
 
 use common::exchange::{Exchange, ParseExchangeError};
 use common::asset;
 
 use model::{FreshTick, Tick};
+use schema::ticks;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Insertable)]
+#[table_name = "ticks"]
 struct InsertableTick {
     exchange: i32,
     asset_pair: i32,
@@ -28,7 +31,7 @@ struct InsertableTick {
     lowest_size: BigDecimal,
     last_price: BigDecimal,
     last_size: BigDecimal,
-    count: i64,
+    trades: i32,
 }
 
 fn freshtick_into_insertabletick(
@@ -47,13 +50,13 @@ fn freshtick_into_insertabletick(
         lowest_size: ft.lowest_size().to_string().parse()?,
         last_price: ft.last_price().to_string().parse()?,
         last_size: ft.last_size().to_string().parse()?,
-        count: *ft.count(),
+        trades: *ft.count(),
     };
 
     Ok(itick)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Queryable)]
 struct RawTick {
     id: i64,
     exchange: i32,
@@ -68,8 +71,32 @@ struct RawTick {
     lowest_size: BigDecimal,
     last_price: BigDecimal,
     last_size: BigDecimal,
-    count: i64,
+    trades: i32,
 }
+
+fn rawtick_into_tick(
+    rt: &RawTick, ex: &HashMap<i32, Exchange>, ap: &HashMap<i32, asset::Pair>
+) -> Result<Tick, TicksError> {
+    let tick = Tick::new(
+        rt.id,
+        *ex.get(&rt.exchange).ok_or("Exchange in DB not present in index.")?,
+        *ap.get(&rt.asset_pair).ok_or("Asset pair in DB not present in index.")?,
+        DateTime::from_utc(rt.start_time, Utc),
+        DateTime::from_utc(rt.end_time, Utc),
+        rt.first_price.to_string().parse()?,
+        rt.first_size.to_string().parse()?,
+        rt.highest_price.to_string().parse()?,
+        rt.highest_size.to_string().parse()?,
+        rt.lowest_price.to_string().parse()?,
+        rt.lowest_size.to_string().parse()?,
+        rt.last_price.to_string().parse()?,
+        rt.last_size.to_string().parse()?,
+        rt.trades
+    );
+
+    Ok(tick)
+}
+    
 
 #[derive(Queryable)]
 struct DbExchange {
@@ -80,8 +107,8 @@ struct DbExchange {
 #[derive(Queryable)]
 struct DbAssetPair {
     id: i32,
-    left_side: String,
-    right_side: String,
+    _left_side: String,
+    _right_side: String,
     pair: String,
 }
 
@@ -121,10 +148,8 @@ pub struct Ticks {
     ids_ap: HashMap<i32, asset::Pair>,
 }
 
-impl Ticks {
-    pub fn new(db_url: &str) -> Result<Self, TicksError> {
-        let connection = PgConnection::establish(db_url)?;
-
+impl Ticks {    
+    pub fn new(connection: PgConnection) -> Result<Self, TicksError> {     
         // Fetch exchanges
         let ex_data = fetch_exchanges(&connection)?;
         let ex_data_iter = ex_data.clone().into_iter();        
@@ -150,11 +175,24 @@ impl Ticks {
         })
     }
 
-    /*
-    pub fn create(&self, ft: FreshTick) -> Result<Tick, Error> {
-        
+    pub fn connect(db_url: &str) -> Result<Self, TicksError> {
+        let connection = PgConnection::establish(db_url)?;
+        Ticks::new(connection)
     }
-    */
+
+
+    /// The 'create' in CRUD. It means to insert a new record in the DB.
+    pub fn create(&self, ft: &FreshTick) -> Result<Tick, TicksError> {
+        use schema::ticks;
+
+        let insertable = freshtick_into_insertabletick(ft, &self.ex_ids, &self.ap_ids)?;
+
+        diesel::insert_into(ticks::table)
+            .values(&insertable)
+            .get_result(&self.connection)
+            .map_err(|e| e.into())
+            .and_then(|t| rawtick_into_tick(&t, &self.ids_ex, &self.ids_ap))
+    }
 }
 
 #[derive(Debug)]
@@ -165,6 +203,7 @@ pub enum TicksError {
     AssetPair(asset::ParseAssetError),
     Convert(String),
     Decimal(ParseBigDecimalError),
+    Numeric(rust_decimal::Error),
 }
 
 impl fmt::Display for TicksError {
@@ -178,6 +217,9 @@ impl fmt::Display for TicksError {
                 write!(f, "Can't convert before DB OP: {}", &err)
             },
             TicksError::Decimal(ref err) => write!(f, "Bad decimal: {}", &err),
+            TicksError::Numeric(ref err) => {
+                write!(f, "Can't convert into decimal from DB: {}", &err)
+            },
         }
     }
 }
@@ -195,7 +237,7 @@ impl error::Error for TicksError {
             TicksError::AssetPair(ref err) => Some(err),
             TicksError::Decimal(ref err) => Some(err),
             TicksError::Convert(_) => None,
-            TicksError::Decimal(ref err) => Some(err),
+            TicksError::Numeric(ref err) => Some(err),
         }
     }
 }
@@ -239,5 +281,11 @@ impl<'a> convert::From<&'a str> for TicksError {
 impl convert::From<ParseBigDecimalError> for TicksError {
     fn from(p: ParseBigDecimalError) -> Self {
         TicksError::Decimal(p)
+    }
+}
+
+impl convert::From<rust_decimal::Error> for TicksError {
+    fn from(e: rust_decimal::Error) -> Self {
+        TicksError::Numeric(e)
     }
 }

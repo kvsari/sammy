@@ -982,28 +982,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "order_book_fetcher"
-version = "0.1.0"
-
-[[package]]
-name = "order_match_fetcher"
-version = "0.1.0"
-dependencies = [
- "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "env_logger 0.5.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "futures 0.1.24 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper 0.12.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "hyper-tls 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "log 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "rust_decimal 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.77 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.77 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "tokio 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "tokio-timer 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "owning_ref"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
