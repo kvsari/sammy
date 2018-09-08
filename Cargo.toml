@@ -1,8 +1,6 @@
 [workspace]
 
 members = [
-	"order_match_fetcher",
-	"order_book_fetcher",
 	"translator",
 	"common",
 	"fetchers/kraken_fetcher",
