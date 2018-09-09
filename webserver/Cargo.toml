@@ -1,0 +1,9 @@
+[package]
+name = "webserver"
+version = "0.1.0"
+authors = ["Stephan Luther <kvsari@gmail.com>"]
+
+[dependencies]
+actix-web = "0.7.4"
+actix = "0.7.4"
+dotenv = "0.13.0"

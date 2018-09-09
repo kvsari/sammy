@@ -1792,6 +1792,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "webserver"
+version = "0.1.0"
+dependencies = [
+ "actix 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "actix-web 0.7.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dotenv 0.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "widestring"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

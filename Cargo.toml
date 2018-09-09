@@ -5,4 +5,5 @@ members = [
 	"common",
 	"fetchers/kraken_fetcher",
 	"ticker_db",
+	"webserver",
 ]
