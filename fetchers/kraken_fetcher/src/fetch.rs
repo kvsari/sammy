@@ -121,6 +121,7 @@ pub fn poll_trade_history2(
 pub fn filter_benign_errors(
     input: impl Stream<Item = Outer<TradeHistory>, Error = FetchError>
 ) -> impl Stream<Item = TradeHistory, Error = ()> {
+    
     // First we remove fetch errors depending on their severity.
     let trimmed = input
         .then(|result| {
@@ -156,14 +157,21 @@ pub fn filter_benign_errors(
         .and_then(|history| {
             let (error, result) = history.consume();
             if let Some(history) = result {
-                Ok(history) // we send back the history inner.
+                Ok(Some(history)) // we send back the history inner.
             } else {
-                // We have errors. Likely a bad command so this stream will never work.
-                // Therefore should exit.
+                // We have errors. It could be a bad command or the service is down
+                // temporarily and will be back up. Need to analyze the error returned
+                // here. For now we'll just try again.
                 error!("Stream broken. Kraken response error: {:?}", &error);
-                Err(())
+
+                // Errors that have happened here are;
+                // 1. ["EService:Unavailable"]
+
+                // We continue anyway...
+                Ok(None)
             }
         })
+        .filter_map(|item| item) // another layer of filtering
 }
 
 /// Takes a filtered fetch stream and converts it into the common format for placement into
