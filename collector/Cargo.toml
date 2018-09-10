@@ -1,0 +1,28 @@
+[package]
+name = "collector"
+version = "0.1.0"
+authors = ["Stephan Luther <kvsari@gmail.com>"]
+
+[lib]
+name = "collector_lib"
+path = "src/lib.rs"
+
+[dependencies]
+log = "0.4.4"
+env_logger = "0.5.13"
+actix-web = "0.7.4"
+actix = "0.7.4"
+dotenv = "0.13.0"
+bytes = "0.4.9"
+serde = "1.0.76"
+serde_derive = "1.0.76"
+serde_json = "1.0.26"
+chrono = "0.4.6"
+futures = "0.1.23"
+lazy_static = "1.1.0"
+rust_decimal = "0.10.1"
+tokio-timer = "0.2.6"
+
+# Internal sammy project crates
+common = { path = "../common" }
+ticker_db = { path = "../ticker_db" }

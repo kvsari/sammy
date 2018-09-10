@@ -1,0 +1,14 @@
+[package]
+name = "trade_history"
+version = "0.1.0"
+authors = ["Stephan Luther <kvsari@gmail.com>"]
+
+[dependencies]
+chrono = "0.4.6"
+bigdecimal = "=0.0.11"
+rust_decimal = "0.10.1"
+diesel = { version = "1.3.2", features = ["chrono", "bigdecimal", "postgres", "num-bigint", "num-integer", "num-traits"] }
+derive-getters = "0.0.7"
+
+# Internal sammy project crates
+common = { path = "../../common" }

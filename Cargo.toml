@@ -6,4 +6,6 @@ members = [
 	"fetchers/kraken_fetcher",
 	"ticker_db",
 	"webserver",
+	"collector",
+	"db/trade_history",
 ]
