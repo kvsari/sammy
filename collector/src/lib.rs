@@ -13,8 +13,8 @@ extern crate rust_decimal;
 extern crate tokio_timer;
 
 extern crate common;
-extern crate ticker_db;
+extern crate trade_history;
 
 pub mod restful;
 pub mod filter;
-//pub mod database;
+pub mod database;

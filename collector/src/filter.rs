@@ -9,6 +9,8 @@ use actix::prelude::*;
 
 use common::{asset, trade, exchange};
 
+use database::{NewTradeHistory, TradeHistoryStorer};
+
 lazy_static! {
     static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
 }
@@ -38,14 +40,14 @@ struct ToFilterTradeHistory {
 /// forwarded on through the system.
 pub struct KrakenTradeHistory {
     timestamp_marker: HashMap<asset::Pair, DateTime<Utc>>,
-    //ticker: Addr<ticker::TickGenerator>,
+    storer: Addr<TradeHistoryStorer>,
 }
 
 impl KrakenTradeHistory {
-    pub fn new(/*ticker: Addr<ticker::TickGenerator>*/) -> Self {
+    pub fn new(storer: Addr<TradeHistoryStorer>) -> Self {
         KrakenTradeHistory {
             timestamp_marker: HashMap::new(),
-            //ticker: ticker,
+            storer: storer,
         }
     }
 }
@@ -109,16 +111,15 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
                 &history.len(),
             );
 
-            /*
             // Send off to the tick generator
-            let data = ticker::RawTradeData::new(
+            let new_trade_history = NewTradeHistory::new(
                 exchange::Exchange::Kraken, asset_pair, history
             );
-            let send_future = self.ticker.send(data)
-                .map_err(|e| error!("Can't send to ticker generator! {}", &e));
+
+            let send_future = self.storer.send(new_trade_history)
+                .map_err(|e| error!("Can't send to storer! {}", &e));
 
             Arbiter::spawn(send_future);
-            */
         }
     }
 }
