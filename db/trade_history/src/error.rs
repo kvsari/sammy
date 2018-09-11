@@ -5,7 +5,7 @@ use diesel::result;
 use rust_decimal;
 use bigdecimal;
 
-use common::{asset, exchange};
+use common::{asset, exchange, trade};
 
 #[derive(Debug)]
 pub enum Error {
@@ -16,6 +16,8 @@ pub enum Error {
     Convert(String),
     Decimal(bigdecimal::ParseBigDecimalError),
     Numeric(rust_decimal::Error),
+    Market(trade::MarketParseError),
+    TradeType(trade::TradeTypeParseError),
 }
 
 impl fmt::Display for Error {
@@ -32,6 +34,8 @@ impl fmt::Display for Error {
             Error::Numeric(ref err) => {
                 write!(f, "Can't convert into decimal from DB: {}", &err)
             },
+            Error::Market(ref err) => write!(f, "Bad market side: {}", &err),
+            Error::TradeType(ref err) => write!(f, "Bad trade type: {}", &err),
         }
     }
 }
@@ -50,12 +54,14 @@ impl error::Error for Error {
             Error::Decimal(ref err) => Some(err),
             Error::Convert(_) => None,
             Error::Numeric(ref err) => Some(err),
+            Error::Market(ref err) => Some(err),
+            Error::TradeType(ref err) => Some(err),
         }
     }
 }
 
 impl convert::From<result::ConnectionError> for Error {
-    fn from(ce: ConnectionError) -> Self {
+    fn from(ce: result::ConnectionError) -> Self {
         Error::Connect(ce)
     }
 }
@@ -67,7 +73,7 @@ impl convert::From<result::Error> for Error {
 }
 
 impl convert::From<exchange::ParseExchangeError> for Error {
-    fn from(p: ParseExchangeError) -> Self {
+    fn from(p: exchange::ParseExchangeError) -> Self {
         Error::Exchange(p)
     }
 }
@@ -91,7 +97,7 @@ impl<'a> convert::From<&'a str> for Error {
 }
 
 impl convert::From<bigdecimal::ParseBigDecimalError> for Error {
-    fn from(p: ParseBigDecimalError) -> Self {
+    fn from(p: bigdecimal::ParseBigDecimalError) -> Self {
         Error::Decimal(p)
     }
 }
@@ -99,5 +105,17 @@ impl convert::From<bigdecimal::ParseBigDecimalError> for Error {
 impl convert::From<rust_decimal::Error> for Error {
     fn from(e: rust_decimal::Error) -> Self {
         Error::Numeric(e)
+    }
+}
+
+impl convert::From<trade::MarketParseError> for Error {
+    fn from(m: trade::MarketParseError) -> Self {
+        Error::Market(m)
+    }
+}
+
+impl convert::From<trade::TradeTypeParseError> for Error {
+    fn from(t: trade::TradeTypeParseError) -> Self {
+        Error::TradeType(t)
     }
 }

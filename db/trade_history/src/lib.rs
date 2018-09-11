@@ -1,5 +1,7 @@
 #[macro_use] extern crate derive_getters;
 #[macro_use] extern crate diesel;
+#[macro_use] extern crate serde_derive;
+extern crate serde;
 extern crate chrono;
 extern crate bigdecimal;
 extern crate rust_decimal;

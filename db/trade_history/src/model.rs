@@ -1,10 +1,11 @@
 //! DB models and their conversions
 
-use chrono::{DateTime, Utc, NaiveDateTime};
+use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 
 use common::{exchange, asset, trade};
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Getters)]
 pub struct FreshTradeItem {
     exchange: exchange::Exchange,
     asset_pair: asset::Pair,
@@ -31,6 +32,7 @@ impl FreshTradeItem {
     }
 }
 
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Getters)]
 pub struct TradeItem {
     id: i64,
     exchange: exchange::Exchange,
