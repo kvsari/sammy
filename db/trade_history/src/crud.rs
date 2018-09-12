@@ -3,7 +3,16 @@ use std::collections::HashMap;
 use std::iter::FromIterator;
 
 use chrono::{DateTime, Utc, NaiveDateTime};
-use diesel::{self, Connection, PgConnection, RunQueryDsl};
+use diesel::{
+    self,
+    Connection,
+    PgConnection,
+    RunQueryDsl,
+    ExpressionMethods,
+    QueryDsl,
+    BoolExpressionMethods,
+    OptionalExtension,
+};
 use bigdecimal::BigDecimal;
 
 use common::{asset, exchange, trade};
@@ -213,5 +222,36 @@ impl Trades {
                         Ok(tis)
                     })
             })
+    }
+
+    /// Reads the last trade item for the `exchange` and `asset_pair` supplied. This can
+    /// be handy to regain one's spot in the data stream.
+    pub fn read_last_item(
+        &self, exchange: exchange::Exchange, asset_pair: asset::Pair
+    ) -> Result<Option<TradeItem>, Error> {        
+        let ex_id = self.ex_ids.get(&exchange)
+            .ok_or("Exchange DB not present in index.")?;
+        let ap_id = self.ap_ids.get(&asset_pair)
+            .ok_or("Asset pair not present in index.")?;
+
+        let result = {
+            use schema::trade_history_items::dsl::*;
+
+            trade_history_items
+                .filter(exchange.eq(ex_id).and(asset_pair.eq(ap_id)))
+                .order(id.desc())
+                .first::<RawTradeItem>(&self.connection)
+                .optional()
+                .map_err(|e| e.to_string())
+        }?;
+
+        if let Some(item) = result {
+            let trade_item = raw_trade_item_into_trade_item(
+                &item, &self.ids_ex, &self.ids_ap, &self.ids_tm, &self.ids_tt,
+            )?;
+            Ok(Some(trade_item))
+        } else {
+            Ok(None)
+        }
     }
 }

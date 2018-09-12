@@ -97,7 +97,8 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
     fn handle(&mut self, msg: ToFilterTradeHistory, ctx: &mut Self::Context) {
         let asset_pair = msg.asset_pair;
         let mut history = msg.history;
-        
+
+        // Add fetching of timestamp marker from storer here.
         let ts = *self.timestamp_marker.get(&asset_pair).unwrap_or(&YR2000);
 
         history.retain(move |item| item.timestamp() > ts);

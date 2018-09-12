@@ -70,3 +70,23 @@ impl Handler<NewTradeHistory> for TradeHistoryStorer {
         self.executor.create(&ftis).expect("Couldn't insert trade history.");
     }
 }
+
+/// A request to fetch the last history item stored in the DB for the exchange/asset_pair.
+#[derive(Debug, Copy, Clone)]
+pub struct ReqLastHistoryItem {
+    exchange: exchange::Exchange,
+    asset_pair: asset::Pair,
+}
+
+impl Message for ReqLastHistoryItem {
+    type Result = Option<model::TradeItem>;
+}
+
+impl Handler<ReqLastHistoryItem> for TradeHistoryStorer {
+    type Result = Option<model::TradeItem>;
+
+    fn handle(&mut self, msg: ReqLastHistoryItem, ctx: &mut Self::Context) -> Self::Result {
+        self.executor.read_last_item(msg.exchange, msg.asset_pair)
+            .expect("Couldn't read from DB.")
+    }
+}
