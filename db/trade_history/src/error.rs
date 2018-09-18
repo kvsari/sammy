@@ -1,7 +1,8 @@
 //! Error type
 use std::{fmt, convert, error};
 
-use diesel::result;
+//use diesel::result;
+use postgres;
 use rust_decimal;
 use bigdecimal;
 
@@ -9,8 +10,9 @@ use common::{asset, exchange, trade};
 
 #[derive(Debug)]
 pub enum Error {
-    Connect(result::ConnectionError),
-    Sql(result::Error),
+    //Connect(result::ConnectionError),
+    //Sql(result::Error),
+    Postgres(postgres::error::Error),
     Exchange(exchange::ParseExchangeError),
     AssetPair(asset::ParseAssetError),
     Convert(String),
@@ -23,8 +25,9 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Connect(ref err) => write!(f, "Connect: {}", &err),
-            Error::Sql(ref err) => write!(f, "SQL: {}", &err),
+            //Error::Connect(ref err) => write!(f, "Connect: {}", &err),
+            //Error::Sql(ref err) => write!(f, "SQL: {}", &err),
+            Error::Postgres(ref err) => write!(f, "Postgress Error: {}", &err),
             Error::Exchange(ref err) => write!(f, "Exchange parse: {}", &err),
             Error::AssetPair(ref err) => write!(f, "Asset pair parse: {}", &err),
             Error::Convert(ref err) => {
@@ -47,8 +50,9 @@ impl error::Error for Error {
 
     fn cause(&self) -> Option<&error::Error> {
         match self {
-            Error::Connect(ref err) => Some(err),
-            Error::Sql(ref err) => Some(err),
+            //Error::Connect(ref err) => Some(err),
+            //Error::Sql(ref err) => Some(err),
+            Error::Postgres(ref err) => Some(err),
             Error::Exchange(ref err) => Some(err),
             Error::AssetPair(ref err) => Some(err),
             Error::Decimal(ref err) => Some(err),
@@ -60,6 +64,7 @@ impl error::Error for Error {
     }
 }
 
+/*
 impl convert::From<result::ConnectionError> for Error {
     fn from(ce: result::ConnectionError) -> Self {
         Error::Connect(ce)
@@ -69,6 +74,13 @@ impl convert::From<result::ConnectionError> for Error {
 impl convert::From<result::Error> for Error {
     fn from(re: result::Error) -> Self {
         Error::Sql(re)
+    }
+}
+*/
+
+impl convert::From<postgres::error::Error> for Error {
+    fn from(e: postgres::error::Error) -> Self {
+        Error::Postgres(e)
     }
 }
 

@@ -2,15 +2,25 @@
 name = "trade_history"
 version = "0.1.0"
 authors = ["Stephan Luther <kvsari@gmail.com>"]
+publish = false
+
+[[bin]]
+name = "trade_history_migrate"
+path = "src/bin/db_migrate_up.rs"
 
 [dependencies]
+log = "0.4.5"
+env_logger = "0.5.13"
 chrono = "0.4.6"
 bigdecimal = "=0.0.11"
 rust_decimal = "0.10.1"
-diesel = { version = "1.3.2", features = ["chrono", "bigdecimal", "postgres", "num-bigint", "num-integer", "num-traits"] }
 derive-getters = "0.0.7"
 serde = "1.0.78"
 serde_derive = "1.0.78"
+schemamama = "0.3.0"
+schemamama_postgres = "0.2.2"
+postgres = "0.15.2"
+dotenv = "0.13.0"
 
 # Internal sammy project crates
 common = { path = "../../common" }
