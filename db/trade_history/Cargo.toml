@@ -8,6 +8,10 @@ publish = false
 name = "trade_history_migrate"
 path = "src/bin/db_migrate_up.rs"
 
+[[bin]]
+name = "trade_history_reverse"
+path = "src/bin/db_migrate_down.rs"
+
 [dependencies]
 log = "0.4.5"
 env_logger = "0.5.13"

@@ -25,7 +25,7 @@ pub fn setup<'a>(
     let mut migrator = Migrator::new(adapter);
 
     // Load in all the migrations. Any new migrations must be added in here.
-    migrator.register(Box::new(m01_initial::CreateExchanges));
+    migrator.register(Box::new(m01_initial::CreateInitial));
 
     Ok(migrator)
 }
