@@ -4,7 +4,6 @@ use std::{fmt, convert, error};
 //use diesel::result;
 use postgres;
 use rust_decimal;
-use bigdecimal;
 
 use common::{asset, exchange, trade};
 
@@ -16,7 +15,7 @@ pub enum Error {
     Exchange(exchange::ParseExchangeError),
     AssetPair(asset::ParseAssetError),
     Convert(String),
-    Decimal(bigdecimal::ParseBigDecimalError),
+    //Decimal(bigdecimal::ParseBigDecimalError),
     Numeric(rust_decimal::Error),
     Market(trade::MarketParseError),
     TradeType(trade::TradeTypeParseError),
@@ -33,7 +32,7 @@ impl fmt::Display for Error {
             Error::Convert(ref err) => {
                 write!(f, "Can't convert before DB OP: {}", &err)
             },
-            Error::Decimal(ref err) => write!(f, "Bad decimal: {}", &err),
+            //Error::Decimal(ref err) => write!(f, "Bad decimal: {}", &err),
             Error::Numeric(ref err) => {
                 write!(f, "Can't convert into decimal from DB: {}", &err)
             },
@@ -55,7 +54,7 @@ impl error::Error for Error {
             Error::Postgres(ref err) => Some(err),
             Error::Exchange(ref err) => Some(err),
             Error::AssetPair(ref err) => Some(err),
-            Error::Decimal(ref err) => Some(err),
+            //Error::Decimal(ref err) => Some(err),
             Error::Convert(_) => None,
             Error::Numeric(ref err) => Some(err),
             Error::Market(ref err) => Some(err),
@@ -108,11 +107,13 @@ impl<'a> convert::From<&'a str> for Error {
     }
 }
 
+/*
 impl convert::From<bigdecimal::ParseBigDecimalError> for Error {
     fn from(p: bigdecimal::ParseBigDecimalError) -> Self {
         Error::Decimal(p)
     }
 }
+*/
 
 impl convert::From<rust_decimal::Error> for Error {
     fn from(e: rust_decimal::Error) -> Self {

@@ -5,7 +5,6 @@ extern crate postgres;
 extern crate schemamama_postgres;
 extern crate serde;
 extern crate chrono;
-extern crate bigdecimal;
 extern crate rust_decimal;
 
 extern crate common;
@@ -13,6 +12,7 @@ extern crate common;
 //mod schema;
 //pub mod model;
 //pub mod crud;
+pub mod crud2;
 pub mod migration;
 pub mod error;
 
