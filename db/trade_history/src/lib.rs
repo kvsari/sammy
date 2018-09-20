@@ -11,8 +11,8 @@ extern crate common;
 
 //mod schema;
 pub mod model;
-//pub mod crud;
-pub mod crud2;
+pub mod crud;
+//pub mod crud2;
 pub mod migration;
 pub mod error;
 
