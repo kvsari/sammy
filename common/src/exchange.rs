@@ -6,6 +6,14 @@ pub enum Exchange {
     Kraken,
 }
 
+impl Exchange {
+    pub fn as_str(&self) -> &str {
+        match self {
+            Exchange::Kraken => "kraken",
+        }
+    }
+}
+
 impl str::FromStr for Exchange {
     type Err = ParseExchangeError;
 

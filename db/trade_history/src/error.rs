@@ -1,5 +1,5 @@
 //! Error type
-use std::{fmt, convert, error};
+use std::{fmt, convert, error, str};
 
 //use diesel::result;
 use postgres;
@@ -15,6 +15,7 @@ pub enum Error {
     Exchange(exchange::ParseExchangeError),
     AssetPair(asset::ParseAssetError),
     Convert(String),
+    InvalidRows(String),
     //Decimal(bigdecimal::ParseBigDecimalError),
     Numeric(rust_decimal::Error),
     Market(trade::MarketParseError),
@@ -31,6 +32,9 @@ impl fmt::Display for Error {
             Error::AssetPair(ref err) => write!(f, "Asset pair parse: {}", &err),
             Error::Convert(ref err) => {
                 write!(f, "Can't convert before DB OP: {}", &err)
+            },
+            Error::InvalidRows(ref err) => {
+                write!(f, "DB operation returned the wrong number of rows: {}", &err)
             },
             //Error::Decimal(ref err) => write!(f, "Bad decimal: {}", &err),
             Error::Numeric(ref err) => {
@@ -56,6 +60,7 @@ impl error::Error for Error {
             Error::AssetPair(ref err) => Some(err),
             //Error::Decimal(ref err) => Some(err),
             Error::Convert(_) => None,
+            Error::InvalidRows(_) => None,
             Error::Numeric(ref err) => Some(err),
             Error::Market(ref err) => Some(err),
             Error::TradeType(ref err) => Some(err),

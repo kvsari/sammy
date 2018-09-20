@@ -22,7 +22,7 @@ serde = "1.0.78"
 serde_derive = "1.0.78"
 schemamama = "0.3.0"
 schemamama_postgres = "0.2.2"
-postgres = "0.15.2"
+postgres = { version = "0.15.2", features = ["with-chrono"] }
 dotenv = "0.13.0"
 
 # Internal sammy project crates
