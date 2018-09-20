@@ -36,6 +36,21 @@ fetch_data_types!(pairs, asset::Pair, "SELECT id, pair FROM asset_pairs");
 fetch_data_types!(markets, trade::Market, "SELECT id, market FROM trade_markets");
 fetch_data_types!(types, trade::Type, "SELECT id, trade FROM trade_types");
 
+macro_rules! db_row_to_trade_item {
+    ($row:expr, $ids_ex:expr, $ids_ap:expr, $ids_tm:expr, $ids_tt:expr) => {
+        TradeItem::new(
+            $row.get(0),
+            *$ids_ex.get(&$row.get(1)).ok_or("Exchange in DB not in index.")?,
+            *$ids_ap.get(&$row.get(2)).ok_or("Asset Pair in DB not in index.")?,
+            $row.get(3),
+            $row.get(4),
+            $row.get(5),
+            *$ids_tm.get(&$row.get(6)).ok_or("Market in DB not in index.")?,
+            *$ids_tt.get(&$row.get(7)).ok_or("Trade type in DB not in index.")?,
+        )
+    }
+}
+
 pub struct Trades {
     connection: Connection,
     ex_ids: HashMap<exchange::Exchange, i32>,
@@ -111,16 +126,9 @@ impl Trades {
                 }
 
                 let row = rows.get(0);
-
-                let iti = TradeItem::new(
-                    row.get(0),
-                    *self.ids_ex.get(&row.get(1)).ok_or("Exchange in DB not in index.")?,
-                    *self.ids_ap.get(&row.get(2)).ok_or("Asset Pair in DB not in index.")?,
-                    row.get(3),
-                    row.get(4),
-                    row.get(5),
-                    *self.ids_tm.get(&row.get(6)).ok_or("Market in DB not in index.")?,
-                    *self.ids_tt.get(&row.get(7)).ok_or("Trade type in DB not in index.")?,
+               
+                let iti = db_row_to_trade_item!(
+                    row, self.ids_ex, self.ids_ap, self.ids_tm, self.ids_tt
                 );
                 
                 itis.push(iti);
@@ -130,5 +138,36 @@ impl Trades {
         transaction.finish()?;
         
         Ok(itis)
+    }
+
+    /// Reads the last trade item for the `exchange` and `asset_pair` supplied. This can
+    /// be handy to regain one's spot in the data stream.
+    pub fn read_last_item(
+        &self, exchange: exchange::Exchange, asset_pair: asset::Pair
+    ) -> Result<Option<TradeItem>, Error> {
+        let ex_id = self.ex_ids.get(&exchange).ok_or("Exchange DB not in index.")?;
+        let ap_id = self.ap_ids.get(&asset_pair).ok_or("Asset pair not in index.")?;
+
+        let rows = self.connection.query(
+            "SELECT \
+             id, exchange, asset_pair, happened, match_size, match_price, market, trade \
+             FROM trade_history_items \
+             WHERE exchange = $1 AND asset_pair = $2 \
+             ORDER BY id DESC \
+             LIMIT 1",
+            &[ex_id, ap_id]
+        )?;
+
+        if rows.is_empty() {
+            return Ok(None);
+        }
+
+        let row = rows.get(0);
+
+        let iti = db_row_to_trade_item!(
+            row, self.ids_ex, self.ids_ap, self.ids_tm, self.ids_tt
+        );
+        
+        Ok(Some(iti))
     }
 }
