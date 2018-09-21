@@ -47,7 +47,7 @@ impl PostgresMigration for CreateInitial {
              id BIGSERIAL NOT NULL PRIMARY KEY, \
              exchange INTEGER NOT NULL REFERENCES exchanges ( id ), \
              asset_pair INTEGER NOT NULL REFERENCES asset_pairs ( id ), \
-             happened TIMESTAMP NOT NULL, \
+             happened TIMESTAMP WITH TIME ZONE NOT NULL, \
              match_size NUMERIC(30,15) NOT NULL, \
              match_price NUMERIC(30,15) NOT NULL, \
              market INTEGER NOT NULL REFERENCES trade_markets ( id ), \

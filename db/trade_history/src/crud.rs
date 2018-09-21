@@ -98,13 +98,12 @@ impl Trades {
     /// advance to save a little time if this information is known in advance for large
     /// batch inserts.
     pub fn create(&self, ftis: &[FreshTradeItem]) -> Result<Vec<TradeItem>, Error> {
-        let transaction = self.connection.transaction()?;
-        let create_stmt = transaction.prepare_cached(
+        //let transaction = self.connection.transaction()?;
+        let create_stmt = self.connection.prepare_cached(
             "INSERT INTO trade_history_items \
              ( exchange, asset_pair, happened, match_size, match_price, market, trade ) \
              VALUES ( $1, $2, $3, $4, $5, $6, $7 ) \
-             RETURNING \
-             ( id, exchange, asset_pair, happened, match_size, match_price, market, trade )"
+             RETURNING *"
         )?;
 
         let itis = ftis.iter()
@@ -126,7 +125,7 @@ impl Trades {
                 }
 
                 let row = rows.get(0);
-               
+                //println!("ROW: {:?}", &row);
                 let iti = db_row_to_trade_item!(
                     row, self.ids_ex, self.ids_ap, self.ids_tm, self.ids_tt
                 );
@@ -135,8 +134,8 @@ impl Trades {
                 Ok(itis)
             })?;
 
-        transaction.finish()?;
-        
+        //transaction.finish()?;
+        println!("Success!");
         Ok(itis)
     }
 
