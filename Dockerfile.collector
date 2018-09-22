@@ -1,0 +1,14 @@
+# We use the rust image as the base
+# https://hub.docker.com/r/_/rust/
+FROM rust:1.29.0
+
+WORKDIR /usr/src/sammy
+
+COPY target/release/collector .
+
+ENV RUST_LOG "collector=info"
+ENV RUST_BACKTRACE 1
+
+EXPOSE 8080
+
+ENTRYPOINT ["collector"]
