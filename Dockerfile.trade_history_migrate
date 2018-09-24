@@ -4,9 +4,14 @@ FROM rust:1.29.0
 
 WORKDIR /usr/src/sammy
 
-COPY target/release/trade_history_migrate .
+COPY . .
+
+RUN cd db/trade_history && \
+		cargo build --release && \
+		cargo install --path . && \
+		cargo clean
 
 ENV RUST_LOG "trade_history_migrate=info"
 ENV RUST_BACKTRACE 1
 
-ENTRYPOINT ["trade_history_migrate"]
+CMD ["/usr/local/cargo/bin/trade_history_migrate"]
