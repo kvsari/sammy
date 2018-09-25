@@ -3,4 +3,15 @@ name = "folder"
 version = "0.1.0"
 authors = ["Stephan Luther <kvsari@gmail.com>"]
 
+[lib]
+name = "folder_lib"
+path = "src/lib.rs"
+
 [dependencies]
+dotenv = "0.13.0"
+log = "0.4.4"
+env_logger = "0.5.13"
+
+# Internal sammy project crates
+common = { path = "../common" }
+trade_history = { path = "../db/trade_history" }
