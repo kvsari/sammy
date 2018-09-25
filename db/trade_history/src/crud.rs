@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 
 use postgres::{Connection, TlsMode};
+use chrono::{DateTime, Utc};
 
 use common::{asset, trade, exchange};
 
@@ -168,5 +169,47 @@ impl Trades {
         );
         
         Ok(Some(iti))
+    }
+
+    /// Do a time based fetch of data. The `from` parameter is inclusive whilst the `to`
+    /// paramater is exclusive. This should allow fetching aggregates of data in chunks.
+    ///
+    /// ## Warning
+    /// This method should be used with care as a large date range can freeze the system.
+    pub fn read_between(
+        &self,
+        exchange: exchange::Exchange,
+        asset_pair: asset::Pair,
+        from: DateTime<Utc>,
+        to: DateTime<Utc>,
+    ) -> Result<Option<Vec<TradeItem>>, Error> {
+        let ex_id = self.ex_ids.get(&exchange).ok_or("Exchange DB not in index.")?;
+        let ap_id = self.ap_ids.get(&asset_pair).ok_or("Asset pair not in index.")?;
+
+        let rows = self.connection.query(
+            "SELECT \
+             id, exchange, asset_pair, happened, match_size, match_price, market, trade \
+             FROM trade_history_items \
+             WHERE exchange = $1 AND asset_pair = $2 AND happened >= $3 AND happened < $4 \
+             ORDER BY id ASC",
+            &[ex_id, ap_id, &from, &to]
+        )?;
+
+        if rows.is_empty() {
+            return Ok(None);
+        }
+
+        let tis = rows
+            .into_iter()
+            .try_fold(vec![], |mut tis, row| -> Result<Vec<TradeItem>, Error> {
+                let ti = db_row_to_trade_item!(
+                    row, self.ids_ex, self.ids_ap, self.ids_tm, self.ids_tt
+                );
+
+                tis.push(ti);
+                Ok(tis)
+            })?;
+
+        Ok(Some(tis))
     }
 }

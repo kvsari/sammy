@@ -1,0 +1,6 @@
+[package]
+name = "folder"
+version = "0.1.0"
+authors = ["Stephan Luther <kvsari@gmail.com>"]
+
+[dependencies]

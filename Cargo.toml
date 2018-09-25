@@ -7,5 +7,6 @@ members = [
 	"ticker_db",
 	"webserver",
 	"collector",
+	"folder",
 	"db/trade_history",
 ]
