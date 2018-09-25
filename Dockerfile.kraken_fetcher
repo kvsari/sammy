@@ -4,7 +4,12 @@ FROM rust:1.29.0
 
 WORKDIR /usr/src/sammy
 
-COPY target/release/kraken_fetcher .
+COPY . .
+
+RUN cd fetchers/kraken_fetcher && \
+       cargo build --release && \
+       cargo install --path . && \
+       cargo clean
 
 ENV RUST_LOG "kraken_fetcher=info"
 ENV RUST_BACKTRACE 1
