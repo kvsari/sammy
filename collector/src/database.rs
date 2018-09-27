@@ -39,11 +39,11 @@ impl TradeHistoryStorer {
 impl Actor for TradeHistoryStorer {
     type Context = Context<Self>;
 
-    fn started(&mut self, ctx: &mut Context<Self>) {
+    fn started(&mut self, _ctx: &mut Self::Context) {
         debug!("Trade history storer started.");
     }
 
-    fn stopped(&mut self, ctx: &mut Context<Self>) {
+    fn stopped(&mut self, _ctx: &mut Self::Context) {
         debug!("Trade history storer stopped.");
     }
 }

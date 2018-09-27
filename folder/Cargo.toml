@@ -11,6 +11,9 @@ path = "src/lib.rs"
 dotenv = "0.13.0"
 log = "0.4.4"
 env_logger = "0.5.13"
+chrono = "0.4.6"
+actix = "0.7.4"
+actix-web = "0.7.8"
 
 # Internal sammy project crates
 common = { path = "../common" }

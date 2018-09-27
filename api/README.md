@@ -6,3 +6,5 @@ API documentation for the services in `sammy`. Service API's are RESTful HTTP us
 The [collector api](collector.raml) is focused on putting raw trade history data.
 
 The [folder api](folder.raml) is focused on fetching folds of the raw data.
+
+All API JSON schemas are in the `schema/` folder.
