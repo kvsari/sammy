@@ -1,0 +1,132 @@
+#%RAML 1.0
+---
+title: Folder API
+version: 0.1.0
+description: API for getting data folds from the DB.
+mediaType: application/json
+
+types:
+  TradeHistoryCollectionSummary:
+    type: !include schema/trade-history-collection-summary.json
+  TradeHistorySummary:
+    type: !include schema/trade-history-summary.json
+  Assets:
+    type: !include schema/assets.json
+  Exchanges:
+    type: !include schema/exchanges.json
+  TradeHistoryItem:
+    type: !include schema/trade-history-item.json
+  Tick:
+    type: !include schema/tick.json
+
+/trade_history:
+  description: Fold over trade history data.
+  get:
+    description: Get a blurb about the type of data that is to be returned.
+    responses:
+      200:
+        body:
+          application/json:
+            type: TradeHistorySummary
+            example: |
+              {
+                "assetpairs":["btc/jpy"],
+                "exchanges":["kraken"],
+                "earliest": "<timestamp>",
+                "latest": "<timestamp>",
+                "count": 123456
+              }
+  /{left_asset}:
+    get:
+      description: A listing of right side assets for this asset.
+      responses:
+        200:
+          body:
+            application/json:
+              type: Assets
+              example: |
+                ["USD"]
+    /{right_asset}:
+      get:
+        description: Get a more precise blurb of the data set as it's narrowed down.
+        responses:
+          200:
+            body:
+              application/json:
+                type: TradeHistorySummary
+                example: |
+                  {
+                    "assetpairs":["btc/jpy"],
+                    "exchanges":["kraken"],
+                    "earliest": "<timestamp>",
+                    "latest": "<timestamp>",
+                    "count": 123456,
+                    "operations": ["tick"]
+                  }
+      /tick:
+        get:
+          description: Fold over a range of trade history items producing a single tick.
+          queryParameters:
+            from:
+              displayName: Time From
+              type: string
+              description: RFC 3339 formatted timestamp. Inclusive time from.
+            to:
+              displayName: Time To
+              type: string
+              description: RFC 3339 formatted timestamp. Exclusive time to.
+          responses:
+            200:
+              body:
+                application/json:
+                  type: Tick
+                  example: |
+                    {
+                      "start": "100",
+                      "high": "110",
+                      "low": "90",
+                      "last": "105",
+                      "count": 43
+                    }
+      /{exchange}:
+        get:
+          description: Yet even more precise blurb of the data set as it's narrowed down.
+          responses:
+            200:
+              body:
+                application/json:
+                  type: TradeHistorySummary
+                  example: |
+                    {
+                      "assetpairs":["btc/jpy"],
+                      "exchanges":["kraken"],
+                      "earliest": "<timestamp>",
+                      "latest": "<timestamp>",
+                      "count": 123456,
+                      "operations": ["tick"]
+                    }
+        /tick:
+          get:
+            description: Fold over a range of trade history items producing a single tick.
+            queryParameters:
+              from:
+                displayName: Time From
+                type: string
+                description: RFC 3339 formatted timestamp. Inclusive time from.
+              to:
+                displayName: Time To
+                type: string
+                description: RFC 3339 formatted timestamp. Exclusive time to.
+            responses:
+              200:
+                body:
+                  application/json:
+                    type: Tick
+                    example: |
+                      {
+                        "start": "100",
+                        "high": "110",
+                        "low": "90",
+                        "last": "105",
+                        "count": 43
+                      }

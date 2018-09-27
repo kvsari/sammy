@@ -1,0 +1,16 @@
+#%RAML 1.0
+---
+title: Folder API
+version: 0.1.0
+description: API for getting data folds from the DB.
+mediaType: application/json
+
+/trade_history:
+  description: Fold over trade history data.
+  get:
+    description: Get a blurb about the data that is to be returned.
+    responses:
+      200:
+        body:
+          application/json:
+            

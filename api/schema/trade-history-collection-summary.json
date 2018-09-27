@@ -1,0 +1,26 @@
+{
+  "type": "array",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "definitions": {
+    "item": {
+      "type": "object",
+      "properties": {
+        "assetpair": {"type":"string"},
+        "exchanges": {
+          "type":"array",
+          "elem":"string"
+        }
+      },
+      "required":["assetpair","exchanges"],
+      "additionalProperties":false
+    }
+  },
+  "properties": {
+    "items":{
+      "type":"array",
+      "elem":{"$ref":"#/definitions/item"}
+    }
+  },
+  "required": ["items"],
+  "additionalProperties": false
+}

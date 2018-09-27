@@ -1,0 +1,12 @@
+{
+  "type": "array",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "properties": {
+    "items": {
+      "type":"array",
+      "elem":"string"
+    }
+  },
+  "required":["items"],
+  "additionalProperties":false
+}

@@ -1,0 +1,70 @@
+#%RAML 1.0
+---
+title: translator API
+version: v1
+description: API defining write operations for insertion of new market data.
+mediaType: application/json
+
+types:
+  TradeHistoryCollectionSummary:
+    type: !include schema/trade-history-collection-summary.json
+  Assets:
+    type: !include schema/assets.json
+  Exchanges:
+    type: !include schema/exchanges.json
+  TradeHistoryItem:
+    type: !include schema/trade-history-item.json
+
+/trade_history:
+  description: A buy and sell have been matched.
+  get:
+    description: Get a blurb about the type of data that is to be returned.
+    responses:
+      200:
+        body:
+          application/json:
+            type: TradeHistoryCollectionSummary
+            example: |
+              [{"assetpair":"btc/jpy", "exchanges":["kraken"]}]
+  /{left_asset}:
+    get:
+      description: A listing of right side assets for this asset.
+      responses:
+        200:
+          body:
+            application/json:
+              type: Assets
+              example: |
+                ["USD"]
+    /{right_asset}:
+      get:
+        description: A listing of exchanges that this pair is being sourced from.
+        responses:
+          200:
+            body:
+              application/json:
+                type: Exchanges
+                example: |
+                  ["kraken"]
+      /{exchange}:
+        put:
+          description: Input new trade history data.
+          body:
+            application/json:
+              type: TradeHistoryItem
+          responses:
+            200:
+              body:
+                application/json:
+                  type: |
+                    {
+                      "type":"object",
+                      "$schema": "http://json-schema.org/draft-04/schema",
+                      "properties": {
+                        "received": {
+                          "type":"integer"
+                        }
+                      },
+                      "required":["received"],
+                      "additionalProperties":false
+                    }

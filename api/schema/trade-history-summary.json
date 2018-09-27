@@ -1,0 +1,35 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "name": "Trade History Summary",
+  "description": "Summary of trade history information data set.",
+
+  "properties": {
+    "assetpairs": {
+      "type": "array",
+      "elem": "string"
+    },
+    "exchanges": {
+      "type": "array",
+      "elem": "string"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "earliest": {
+      "type": "string",
+      "format": "datetime"
+    },
+    "latest": {
+      "type": "string",
+      "format": "datetime"
+    },
+    "operations": {
+      "type": "array",
+      "elem": "string",
+      "description": "The kind of operations available on the data set."
+    }
+  },
+  "required": ["assetpairs", "exchanges", "count", "latest", "earliest"],
+  "additionalProperties": false
+}

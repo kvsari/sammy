@@ -1,0 +1,30 @@
+{
+  "type":"array",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "definitions": {
+    "match": {
+      "type":"object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "datetime-only"
+        },
+        "size": {"type":"string"},
+        "price": {"type":"string"},
+        "market": {
+          "type":"string",
+          "enum":["maker", "taker"]
+        },
+        "meta": {"type":"string"}
+      },
+      "required":["size", "price", "market"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "items": {
+      "type":"array",
+      "elem":{ "$ref":"#/definitions/match" }
+    }
+  }
+}

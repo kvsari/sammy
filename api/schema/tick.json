@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "name": "Tick",
+  "description": "A single tick. Exchange, asset pair and time range are discerned from the context of its acquisition.",
+
+  "properties": {
+    "start": {
+      "type": "string",
+      "description": "Price of the first trade_history item on the set folded set."
+    },
+    "high": {
+      "type": "string",
+      "description": "Highest price in the folded set."
+    },
+    "low": {
+      "type": "string",
+      "description": "Lowest price in the folded set."
+    },
+    "last": {
+      "type": "string",
+      "description": "Last price in the folded set."
+    },
+    "count": {
+      "type": "integer",
+      "description": "The amount of items that were folded."
+    }
+  },
+
+  "required": ["start", "middle", "low", "last", "count"],
+  "additionalProperties": false
+}
