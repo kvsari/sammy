@@ -113,13 +113,13 @@ impl Handler<TradeSummaryRequest> for TradeHistoryFetcher {
         let set_summary = self.fetcher.read_set_summary(msg.exchange, msg.asset_pair)
             .map_err(|e| e.to_string())?;
 
-        /// If no exchange is set, we searched for all exchanges
+        // If no exchange is set, we searched for all exchanges
         let exchanges = match msg.exchange {
             Some(exchange) => vec![exchange],
             None => self.fetcher.exchanges(),
         };
 
-        /// If no asset_pair is set, we searched for all asset pairs.
+        // If no asset_pair is set, we searched for all asset pairs.
         let asset_pairs = match msg.asset_pair {
             Some(asset_pair) => vec![asset_pair],
             None => self.fetcher.asset_pairs(),

@@ -6,6 +6,7 @@ use common::{asset, exchange};
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum FoldOperation {
+    #[serde(rename = "tick")]
     Tick,
 }
 
@@ -17,6 +18,8 @@ pub struct TradeHistorySummary {
     count: u64,
     earliest: DateTime<Utc>,
     latest: DateTime<Utc>,
+    
+    #[serde(skip_serializing_if = "Option::is_none")]
     operations: Option<Vec<FoldOperation>>,
 }
 
