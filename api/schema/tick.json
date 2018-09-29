@@ -5,7 +5,7 @@
   "description": "A single tick. Exchange, asset pair and time range are discerned from the context of its acquisition.",
 
   "properties": {
-    "start": {
+    "first": {
       "type": "string",
       "description": "Price of the first trade_history item on the set folded set."
     },
@@ -27,6 +27,6 @@
     }
   },
 
-  "required": ["start", "middle", "low", "last", "count"],
+  "required": ["first", "high", "low", "last", "count"],
   "additionalProperties": false
 }

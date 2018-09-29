@@ -1,6 +1,7 @@
 //! RESTful handlers. 
 
 use futures::{future, Future, Stream};
+use chrono::{NaiveDateTime, DateTime, Utc};
 use actix::Addr;
 use actix_web::{HttpRequest, HttpResponse, Responder, HttpMessage, AsyncResponder, error};
 
@@ -9,6 +10,7 @@ use common::exchange::Exchange;
 
 use output;
 use database;
+use fold;
 use super::State;
 
 macro_rules! parse_path_segment {
@@ -17,6 +19,18 @@ macro_rules! parse_path_segment {
             Ok(s) => s,
             Err(_e) => return Box::new(future::ok(HttpResponse::BadRequest().finish())),
         };
+    };
+}
+
+macro_rules! extract_query {
+    ($parameter:expr, $query_hash:expr) => {
+        match $query_hash.get($parameter) {
+            Some(param) => match param.parse() {
+                Ok(p) => p,
+                Err(_e) => return Box::new(future::ok(HttpResponse::BadRequest().finish())),
+            },
+            None => return Box::new(future::ok(HttpResponse::BadRequest().finish())),
+        }
     };
 }
 
@@ -38,6 +52,28 @@ fn fetch_summary(
             },
             Err(e) => {
                 error!("Database actor failure: {}", &e);
+                Ok(HttpResponse::InternalServerError().finish())
+            },
+        })
+        .responder()
+}
+
+fn generate_tick(
+    req: fold::RequestTick,
+    addr: Addr<fold::TradeHistoryFolder>,
+) -> Box<Future<Item = HttpResponse, Error = error::Error>> {
+    addr.send(req)
+        .then(move |result| match result {
+            Ok(Ok(tick)) => {
+                trace!("Tick: {:?}", &tick);
+                Ok(HttpResponse::Ok().json(tick))
+            },
+            Ok(Err(e)) => {
+                error!("Tick fold failure: {}", &e);
+                Ok(HttpResponse::InternalServerError().finish())
+            },
+            Err(e) => {
+                error!("Trade history folding actor failure: {}", &e);
                 Ok(HttpResponse::InternalServerError().finish())
             },
         })
@@ -77,23 +113,30 @@ pub fn thf_match_asset_pair(
     fetch_summary(request, fetcher_addr, vec![output::FoldOperation::Tick])
 }
 
-pub fn thf_match_asset_pair_tick(req: &HttpRequest<State>) -> impl Responder {
-    /*
+pub fn thf_match_asset_pair_tick(
+    req: &HttpRequest<State>
+) -> Box<Future<Item = HttpResponse, Error = error::Error>> {
     let params = req.match_info();
     let lasset = params.get("left_asset")
         .expect("Invalid use of function. Need to have {left_asset} on path.");
     let rasset = params.get("right_asset")
         .expect("Invalid use of function. Need to have {right_asset} on path.");
 
+    let query = req.query();
+    let from: u64 = extract_query!("from", query);
+    let to: u64 = extract_query!("to", query);
+
+    let from = DateTime::from_utc(NaiveDateTime::from_timestamp(from as i64, 0), Utc);
+    let to = DateTime::from_utc(NaiveDateTime::from_timestamp(to as i64, 0), Utc);
+
     let left: Asset = parse_path_segment!(lasset);
     let right: Asset = parse_path_segment!(rasset);
+    let pair = asset::Pair::new(left, right);
     let state = req.state();
-    let fetcher = state.trade_history_fetcher();
-    */
+    let folder = state.trade_history_folder().clone();
+    let request = fold::RequestTick::new(pair, from, to);
     
-    // TODO: Finish me
-    let finish_me = r##"{"todo":"/trade_history/1/2/tick"}"##;
-    HttpResponse::Ok().body(finish_me)
+    generate_tick(request, folder)
 }
 
 pub fn thf_match_exchange(

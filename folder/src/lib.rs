@@ -6,10 +6,12 @@ extern crate actix;
 extern crate actix_web;
 extern crate chrono;
 extern crate futures;
+extern crate rust_decimal;
 
 extern crate common;
 extern crate trade_history;
 
 pub mod database;
 pub mod restful;
+pub mod fold;
 mod output;

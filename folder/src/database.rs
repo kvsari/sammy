@@ -1,5 +1,4 @@
 //! Database synchronous actor
-
 use chrono::{DateTime, Utc};
 use actix::prelude::*;
 

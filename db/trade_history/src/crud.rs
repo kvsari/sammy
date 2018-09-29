@@ -207,7 +207,7 @@ impl Trades {
              id, exchange, asset_pair, happened, match_size, match_price, market, trade \
              FROM trade_history_items \
              WHERE exchange = $1 AND asset_pair = $2 AND happened >= $3 AND happened < $4 \
-             ORDER BY id ASC",
+             ORDER BY happened ASC",
             &[ex_id, ap_id, &from, &to]
         )?;
 

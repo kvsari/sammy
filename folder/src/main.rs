@@ -10,7 +10,7 @@ extern crate folder_lib as lib;
 use actix::prelude::*;
 use actix_web::{server::HttpServer, App, http::Method};
 
-use lib::{database, restful};
+use lib::{database, restful, fold};
 
 mod config;
 
@@ -28,7 +28,17 @@ fn main() {
         database::TradeHistoryFetcher::new(db_url.as_str())
     });
 
-    let state = restful::State::new(th_fetch_addr);
+    /*
+    let th_fetch_addr_clone = th_fetch_addr.clone();
+    let th_fold_addr = SyncArbiter::start(1, move || {
+        fold::TradeHistoryFolder::new(th_fetch_addr_clone.clone())
+    });
+     */
+
+    let th_fold = fold::TradeHistoryFolder::new(th_fetch_addr.clone());
+    let th_fold_addr = th_fold.start();
+
+    let state = restful::State::new(th_fetch_addr, th_fold_addr);
 
     HttpServer::new(move || {
         App::with_state(state.clone())
