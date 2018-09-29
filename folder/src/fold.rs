@@ -83,7 +83,7 @@ impl Actor for TradeHistoryFolder {
 impl Handler<RequestTick> for TradeHistoryFolder {
     type Result = ResponseFuture<output::Tick, String>;
 
-    fn handle(&mut self, msg: RequestTick, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: RequestTick, _ctx: &mut Self::Context) -> Self::Result {
         let thr: database::TradeHistoryRequest = msg.into();
         let fetch_fut = self.source.send(thr);
 

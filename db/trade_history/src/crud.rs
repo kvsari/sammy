@@ -194,26 +194,37 @@ impl Trades {
     /// This method should be used with care as a large date range can freeze the system.
     pub fn read_between(
         &self,
-        exchange: exchange::Exchange,
+        exchange: Option<exchange::Exchange>,
         asset_pair: asset::Pair,
         from: DateTime<Utc>,
         to: DateTime<Utc>,
-    ) -> Result<Option<Vec<TradeItem>>, Error> {
-        let ex_id = self.ex_ids.get(&exchange).ok_or("Exchange DB not in index.")?;
+    ) -> Result<Vec<TradeItem>, Error> {
         let ap_id = self.ap_ids.get(&asset_pair).ok_or("Asset pair not in index.")?;
-
-        let rows = self.connection.query(
-            "SELECT \
-             id, exchange, asset_pair, happened, match_size, match_price, market, trade \
-             FROM trade_history_items \
-             WHERE exchange = $1 AND asset_pair = $2 AND happened >= $3 AND happened < $4 \
-             ORDER BY happened ASC",
-            &[ex_id, ap_id, &from, &to]
-        )?;
-
-        if rows.is_empty() {
-            return Ok(None);
-        }
+        
+        let rows = match exchange {
+            Some(exchange) => {
+                let ex_id = self.ex_ids.get(&exchange).ok_or("Exchange DB not in index.")?;
+                self.connection.query(
+                    "SELECT \
+                     id, exchange, asset_pair, happened, match_size, match_price, \
+                     market, trade \
+                     FROM trade_history_items \
+                     WHERE exchange = $1 AND asset_pair = $2 AND happened >= $3 \
+                     AND happened < $4 \
+                     ORDER BY happened ASC",
+                    &[ex_id, ap_id, &from, &to]
+                )?
+            },
+            None => self.connection.query(
+                "SELECT \
+                 id, exchange, asset_pair, happened, match_size, match_price, \
+                 market, trade \
+                 FROM trade_history_items \
+                 WHERE asset_pair = $1 AND happened >= $2 AND happened < $3 \
+                 ORDER BY happened ASC",
+                &[ap_id, &from, &to]
+            )?,
+        };
 
         let tis = rows
             .into_iter()
@@ -226,7 +237,7 @@ impl Trades {
                 Ok(tis)
             })?;
 
-        Ok(Some(tis))
+        Ok(tis)
     }
 
     /// Summarize the items in the trade history table.

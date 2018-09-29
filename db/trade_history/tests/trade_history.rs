@@ -64,12 +64,11 @@ fn search_date_range() {
     let _tis = trades.create(&ftis).expect("DB error.");
 
     let fetched = trades.read_between(
-        exchange::Exchange::Kraken, asset::BTC_USD, ts2, ts5,
+        Some(exchange::Exchange::Kraken), asset::BTC_USD, ts2, ts5,
     ).expect("DB read error.");
         
 
-    assert!(fetched.is_some());
-    let fetched = fetched.unwrap();
+    assert!(!fetched.is_empty());
     assert!(fetched.len() == 3);
     assert!(*fetched[0].timestamp() == ts2);
     assert!(*fetched[1].timestamp() == ts3);

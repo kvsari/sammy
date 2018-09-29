@@ -1,9 +1,9 @@
 //! RESTful handlers. 
 
-use futures::{future, Future, Stream};
+use futures::{future, Future};
 use chrono::{NaiveDateTime, DateTime, Utc};
 use actix::Addr;
-use actix_web::{HttpRequest, HttpResponse, Responder, HttpMessage, AsyncResponder, error};
+use actix_web::{HttpRequest, HttpResponse, Responder, AsyncResponder, error};
 
 use common::asset::{self, Asset};
 use common::exchange::Exchange;
@@ -163,8 +163,9 @@ pub fn thf_match_exchange(
     fetch_summary(request, fetcher_addr, vec![output::FoldOperation::Tick])
 }
 
-pub fn thf_match_exchange_tick(req: &HttpRequest<State>) -> impl Responder {
-    /*
+pub fn thf_match_exchange_tick(
+    req: &HttpRequest<State>
+) -> Box<Future<Item = HttpResponse, Error = error::Error>> {
     let params = req.match_info();
     let lasset = params.get("left_asset")
         .expect("Invalid use of function. Need to have {left_asset} on path.");
@@ -172,9 +173,21 @@ pub fn thf_match_exchange_tick(req: &HttpRequest<State>) -> impl Responder {
         .expect("Invalid use of function. Need to have {right_asset} on path.");
     let exchange = params.get("exchange")
         .expect("Invalid use of function. Need to have {exchange} on path.");
-     */
+
+    let query = req.query();
+    let from: u64 = extract_query!("from", query);
+    let to: u64 = extract_query!("to", query);
+
+    let from = DateTime::from_utc(NaiveDateTime::from_timestamp(from as i64, 0), Utc);
+    let to = DateTime::from_utc(NaiveDateTime::from_timestamp(to as i64, 0), Utc);
+
+    let left: Asset = parse_path_segment!(lasset);
+    let right: Asset = parse_path_segment!(rasset);
+    let exchange: Exchange = parse_path_segment!(exchange);
+    let pair = asset::Pair::new(left, right);
+    let state = req.state();
+    let folder = state.trade_history_folder().clone();
+    let request = fold::RequestTick::new(pair, from, to).filter_exchange(exchange);
     
-    // TODO: Finish me
-    let finish_me = r##"{"todo":"/trade_history/1/2/exchange/tick"}"##;
-    HttpResponse::Ok().body(finish_me)
+    generate_tick(request, folder)
 }

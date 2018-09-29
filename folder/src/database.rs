@@ -97,9 +97,8 @@ impl Handler<TradeHistoryRequest> for TradeHistoryFetcher {
     fn handle(
         &mut self, msg: TradeHistoryRequest, _ctx: &mut Self::Context
     ) -> Self::Result {
-
-        // TODO
-        Ok(Vec::new())
+        self.fetcher.read_between(msg.exchange, msg.asset_pair, msg.from, msg.to)
+            .map_err(|e| e.to_string())
     }
 }
 
