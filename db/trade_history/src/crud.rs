@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 
 use common::{asset, trade, exchange};
 
-use model::{FreshTradeItem, TradeItem};
+use model::{FreshTradeItem, TradeItem, TradeSetSummary};
 use error::Error;
 
 macro_rules! fetch_data_types {
@@ -89,6 +89,22 @@ impl Trades {
     pub fn connect(url: &str) -> Result<Self, Error> {
         let connection = Connection::connect(url, TlsMode::None)?;
         Trades::new(connection)
+    }
+
+    /// Asset pairs loaded in the database. Doesn't mean that there is data for it.
+    pub fn asset_pairs(&self) -> Vec<asset::Pair> {
+        self.ap_ids
+            .keys()
+            .map(|k| *k)
+            .collect()
+    }
+
+    /// Exchanges loaded in the database. Doesn't mean that there is data for it.
+    pub fn exchanges(&self) -> Vec<exchange::Exchange> {
+        self.ex_ids
+            .keys()
+            .map(|a| *a)
+            .collect()
     }
 
     /// Insert into the DB. The 'Create' part of CRUD. This one will check every
@@ -211,5 +227,115 @@ impl Trades {
             })?;
 
         Ok(Some(tis))
+    }
+
+    /// Summarize the items in the trade history table.
+    pub fn read_set_summary(
+        &self,
+        exchange: Option<exchange::Exchange>,
+        asset_pair: Option<asset::Pair>,
+    ) -> Result<TradeSetSummary, Error> {
+        match (exchange, asset_pair) {
+            (Some(ex), Some(ap)) => {
+                let ex_id = self.ex_ids.get(&ex).ok_or("Exchange DB not in index.")?;
+                let ap_id = self.ap_ids.get(&ap).ok_or("Asset pair not in index.")?;
+                let rows = self.connection.query(
+                    "SELECT \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      WHERE asset_pair = $1 AND exchange = $2 \
+                      ORDER BY happened ASC LIMIT 1 \
+                     ) AS first, \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      WHERE asset_pair = $1 AND exchange = $2 \
+                      ORDER BY happened DESC LIMIT 1 \
+                     ) AS last, \
+                     (SELECT COUNT(*) \
+                      FROM trade_history_items \
+                      WHERE asset_pair = $1 AND exchange = $2)",
+                    &[ap_id, ex_id]
+                )?;
+
+                if rows.is_empty() {
+                    Ok(TradeSetSummary::new(Utc::now(), Utc::now(), 0))
+                } else {
+                    let row = rows.into_iter().next().unwrap();
+                    Ok(TradeSetSummary::new(row.get(0), row.get(1), row.get(2)))
+                }
+            },
+            (None, Some(ap)) => {
+                let ap_id = self.ap_ids.get(&ap).ok_or("Asset pair not in index.")?;
+                let rows = self.connection.query(
+                    "SELECT \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      WHERE asset_pair = $1 \
+                      ORDER BY happened ASC LIMIT 1 \
+                     ) AS first, \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      WHERE asset_pair = $1 \
+                      ORDER BY happened DESC LIMIT 1 \
+                     ) AS last, \
+                     (SELECT COUNT(*) FROM trade_history_items WHERE asset_pair = $1)",
+                    &[ap_id]
+                )?;
+
+                if rows.is_empty() {
+                    Ok(TradeSetSummary::new(Utc::now(), Utc::now(), 0))
+                } else {
+                    let row = rows.into_iter().next().unwrap();
+                    Ok(TradeSetSummary::new(row.get(0), row.get(1), row.get(2)))
+                }
+            },
+            (Some(ex), None) => {
+                let ex_id = self.ex_ids.get(&ex).ok_or("Exchange DB not in index.")?;
+                let rows = self.connection.query(
+                    "SELECT \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      WHERE exchange = $1 \
+                      ORDER BY happened ASC LIMIT 1 \
+                     ) AS first, \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      WHERE exchange = $1 \
+                      ORDER BY happened DESC LIMIT 1 \
+                     ) AS last, \
+                     (SELECT COUNT(*) FROM trade_history_items WHERE exchange = $1)",
+                    &[ex_id]
+                )?;
+
+                if rows.is_empty() {
+                    Ok(TradeSetSummary::new(Utc::now(), Utc::now(), 0))
+                } else {
+                    let row = rows.into_iter().next().unwrap();
+                    Ok(TradeSetSummary::new(row.get(0), row.get(1), row.get(2)))
+                }
+            },
+            (None, None) => {
+                let rows = self.connection.query(
+                    "SELECT \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      ORDER BY happened ASC LIMIT 1 \
+                     ) AS first, \
+                     (SELECT happened \
+                      FROM trade_history_items \
+                      ORDER BY happened DESC LIMIT 1 \
+                     ) AS last, \
+                     (SELECT COUNT(*) FROM trade_history_items)",
+                    &[]
+                )?;
+
+                if rows.is_empty() {
+                    Ok(TradeSetSummary::new(Utc::now(), Utc::now(), 0))
+                } else {
+                    let row = rows.into_iter().next().unwrap();
+                    Ok(TradeSetSummary::new(row.get(0), row.get(1), row.get(2)))
+                }
+            },
+        }
     }
 }

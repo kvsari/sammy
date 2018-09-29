@@ -60,3 +60,18 @@ impl TradeItem {
         }
     }
 }
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Getters)]
+pub struct TradeSetSummary {
+    first: DateTime<Utc>,
+    last: DateTime<Utc>,
+    count: i64,
+}
+
+impl TradeSetSummary {
+    pub fn new(first: DateTime<Utc>, last: DateTime<Utc>, count: i64) -> Self {
+        TradeSetSummary {
+            first, last, count
+        }
+    }
+}
