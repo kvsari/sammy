@@ -5,6 +5,12 @@ extern crate actix;
 extern crate actix_web;
 extern crate rust_decimal;
 extern crate chrono;
+extern crate futures;
+extern crate bytes;
+extern crate serde;
+extern crate serde_json;
+
+extern crate common;
 
 use actix_web::{server, App, fs, http::Method, middleware::Logger};
 
@@ -30,8 +36,8 @@ fn main() {
                         r.method(Method::GET).f(handler::info)
                     })
                     .resource("/24h_10_min_spans", |r| {
-                        //r.method(Method::GET).f(handler::ticks_last_24h_10_min_spans)
-                        r.method(Method::GET).f(handler::dummy_ticks_144)
+                        r.method(Method::GET).f(handler::ticks_last_24h_10_min_spans)
+                        //r.method(Method::GET).f(handler::dummy_ticks_144)
                     })
             })
             .scope("/", |scope| {

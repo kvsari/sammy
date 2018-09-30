@@ -2,7 +2,7 @@ use rust_decimal::Decimal;
 
 /// A single tick. The time from/to, asset_pair, exchange(s) are not present and to be
 /// determined via the calling context.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Getters)]
 pub struct Tick {
     first: Decimal,
     high: Decimal,
