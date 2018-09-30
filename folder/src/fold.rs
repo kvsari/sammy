@@ -7,9 +7,9 @@ use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use actix::prelude::*;
 
-use common::{exchange, asset};
+use common::{exchange, asset, tick};
 
-use output;
+//use output;
 use database;
 
 /// Request a tick for all the trade history items that fall within the set criteria. Take
@@ -39,7 +39,7 @@ impl RequestTick {
 }
 
 impl Message for RequestTick {
-    type Result = Result<output::Tick, String>;
+    type Result = Result<tick::Tick, String>;
 }
 
 impl From<RequestTick> for database::TradeHistoryRequest {
@@ -81,7 +81,7 @@ impl Actor for TradeHistoryFolder {
 }
 
 impl Handler<RequestTick> for TradeHistoryFolder {
-    type Result = ResponseFuture<output::Tick, String>;
+    type Result = ResponseFuture<tick::Tick, String>;
 
     fn handle(&mut self, msg: RequestTick, _ctx: &mut Self::Context) -> Self::Result {
         let thr: database::TradeHistoryRequest = msg.into();
@@ -95,7 +95,7 @@ impl Handler<RequestTick> for TradeHistoryFolder {
                 Ok(items) => Ok(
                     items
                         .into_iter()
-                        .fold(output::Tick::new(z, z, z, z, 0), |mut tick, item| {
+                        .fold(tick::Tick::new(z, z, z, z, 0), |mut tick, item| {
                             tick.folding_add(*item.price());
                             tick
                         })

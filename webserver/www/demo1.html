@@ -1,0 +1,130 @@
+<!DOCTYPE HTML>
+<html>
+  
+  <head>
+    <title>In development demonstration</title>
+    <script src="Chart.bundle.js"></script>
+    <script src="utils.js"></script>
+    <style>
+      canvas {
+          -moz-user-select: none;
+	  -webkit-user-select: none;
+	  -ms-user-select: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <br>
+    <div style="width:100%;">
+      <canvas id="canvas"></canvas>
+    </div>
+    <br>   
+    <script>    
+      //var datapoints = [0, 20, 20, 60, 60, 120, NaN, 180, 120, 125, 105, 110, 170];
+      //var datapoints = ["100", "50", "25"];
+      var datapoints = [];
+      //var columns = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+      var columns = [
+          '-24:00', '-23:50', '-23:40', '-23:30', '-23:20', '-23:10', 
+          '-23:00', '-22:50', '-22:40', '-22:30', '-22:20', '-22:10',
+          '-22:00', '-21:50', '-21:40', '-21:30', '-21:20', '-21:10',
+          '-21:00', '-20:50', '-20:40', '-20:30', '-20:20', '-20:10',
+          '-20:00', '-19:50', '-19:40', '-19:30', '-19:20', '-19:10',
+          '-19:00', '-18:50', '-18:40', '-18:30', '-18:20', '-18:10',
+          '-18:00', '-17:50', '-17:40', '-17:30', '-17:20', '-17:10',
+          '-17:00', '-16:50', '-16:40', '-16:30', '-16:20', '-16:10',
+          '-16:00', '-15:50', '-15:40', '-15:30', '-15:20', '-15:10',
+          '-15:00', '-14:50', '-14:40', '-14:30', '-14:20', '-14:10',
+          '-14:00', '-13:50', '-13:40', '-13:30', '-13:20', '-13:10',
+          '-13:00', '-12:50', '-12:40', '-12:30', '-12:20', '-12:10',
+          '-12:00', '-11:50', '-11:40', '-11:30', '-11:20', '-11:10',
+          '-11:00', '-10:50', '-10:40', '-10:30', '-10:20', '-10:10',
+          '-10:00', '-09:50', '-09:40', '-09:30', '-09:20', '-09:10',
+          '-09:00', '-08:50', '-08:40', '-08:30', '-08:20', '-08:10',
+          '-08:00', '-07:50', '-07:40', '-07:30', '-07:20', '-07:10',
+          '-07:00', '-06:50', '-06:40', '-06:30', '-06:20', '-06:10',
+          '-06:00', '-05:50', '-05:40', '-05:30', '-05:20', '-05:10',
+          '-05:00', '-04:50', '-04:40', '-04:30', '-04:20', '-04:10',
+          '-04:00', '-03:50', '-03:40', '-03:30', '-03:20', '-03:10',
+          '-03:00', '-02:50', '-02:40', '-02:30', '-02:20', '-02:10',
+          '-02:00', '-01:50', '-01:40', '-01:30', '-01:20', '-01:10',
+          '-01:00', '-00:50', '-00:40', '-00:30', '-00:20', '-00:10'
+      ];
+      var config = {
+	  type: 'line',
+	  data: {
+              labels: columns,
+	      datasets: [{
+		  label: 'Highest per tick',
+		  data: datapoints,
+		  borderColor: window.chartColors.green,
+		  backgroundColor: 'rgba(0, 0, 0, 0)',
+		  fill: false,
+		  lineTension: 0
+	      }]
+	  },
+	  options: {
+	      responsive: true,
+	      title: {
+		  display: true,
+		  text: 'Work in progress demonstration'
+	      },
+	      tooltips: {
+		  mode: 'index'
+	      },
+	      scales: {
+		  xAxes: [{
+		      display: true,
+		      scaleLabel: {
+			  display: true
+		      }
+		  }],
+		  yAxes: [{
+		      display: true,
+		      scaleLabel: {
+			  display: true,
+			  labelString: 'Value'
+		      },
+                      /*
+		       ticks: {
+		       suggestedMin: -10,
+		       suggestedMax: 1000,
+		       }
+                      */
+		  }]
+	      }
+	  }
+      };
+    
+      window.onload = function() {
+          var myhostname = location.hostname;
+          var myport = location.port;
+
+          var url = "http://" + myhostname + ":" + myport + "/tick/24h_10_min_spans";
+
+          //window.alert(myhostname);
+          //window.alert(myport);
+          //window.alert(url);
+
+          fetch(url)
+              .then((response) => response.json())
+              .then(function(data) {
+                  //window.alert(data);
+                  for (var i in data) {
+                      //window.alert(i);
+                      datapoints.push(i);
+                  }
+              })
+              .catch(function(error) {
+                  console.log(JSON.stringify(error));
+              });
+
+          var ctx = document.getElementById('canvas').getContext('2d');
+	  window.myLine = new Chart(ctx, config);
+      };
+
+    </script>
+  </body>
+  
+</html>

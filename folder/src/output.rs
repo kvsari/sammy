@@ -1,5 +1,5 @@
 //! Data model for display to the client
-use rust_decimal::Decimal;
+//use rust_decimal::Decimal;
 use chrono::{DateTime, Utc};
 
 use common::{asset, exchange};
@@ -49,6 +49,7 @@ impl TradeHistorySummary {
     }
 }
 
+/*
 /// A single tick. The time from/to, asset_pair, exchange(s) are not present and to be
 /// determined via the calling context.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
@@ -90,3 +91,4 @@ impl Tick {
         self.count += 1;
     }
 }
+*/

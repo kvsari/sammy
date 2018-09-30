@@ -3,8 +3,10 @@ extern crate dotenv;
 extern crate env_logger;
 extern crate actix;
 extern crate actix_web;
+extern crate rust_decimal;
+extern crate chrono;
 
-use actix_web::{server, App, http::Method};
+use actix_web::{server, App, fs, http::Method, middleware::Logger};
 
 mod config;
 mod handler;
@@ -21,14 +23,20 @@ fn main() {
     
     server::HttpServer::new(move || {
         App::with_state(state.clone())
+            .middleware(Logger::default())
             .scope("/tick", |scope| {
                 scope
                     .resource("", |r| {
                         r.method(Method::GET).f(handler::info)
                     })
                     .resource("/24h_10_min_spans", |r| {
-                        r.method(Method::GET).f(handler::ticks_last_24h_10_min_spans)
+                        //r.method(Method::GET).f(handler::ticks_last_24h_10_min_spans)
+                        r.method(Method::GET).f(handler::dummy_ticks_144)
                     })
+            })
+            .scope("/", |scope| {
+                scope
+                    .handler("", fs::StaticFiles::new("www").unwrap().show_files_listing())
             })
     })
         .bind(configuration.listen())
