@@ -111,11 +111,7 @@
               .then(function(data) {
 
                   for (var i = 0, len = datapoints.length; i < len; ++i) {
-                      //if data[i] == 0 {
-                      //    datapoints[i] = NaN;
-                      //} else {
-                          datapoints[i] = data[i];
-                      //}
+                      datapoints[i] = (data[i] > 0) ? data[i]:NaN;
                   }
                   
                   window.myLine.update();
