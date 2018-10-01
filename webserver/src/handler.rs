@@ -67,9 +67,14 @@ pub fn ticks_last_24h_10_min_spans(
         let subtract = Duration::minutes(minutes);
         let start = now - subtract;
         minutes -= 10;
-        if minutes <= 0 {
+
+        // It's perfectly balanced. 1440 negated by 10 144 times balances out.
+        // Should never break. Just here in case the `minutes` variable is ever changed.
+        if minutes < 0 {
+            //panic!("Over extended!");
             break;
         } 
+        
         let subtract = Duration::minutes(minutes);
         let end = now - subtract;
 
