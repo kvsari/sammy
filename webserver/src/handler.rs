@@ -1,14 +1,23 @@
 //! Restful handlers
-use std::iter;
+use std::{self, fmt};
 
-use futures::{Future, Stream, future};
-use futures::future::{ok, lazy, result, FutureResult};
+use futures::{Future, Stream};
+use futures::future::ok;
 use futures::stream::iter_ok;
 use bytes::Bytes;
-use rust_decimal::Decimal;
+//use rust_decimal::Decimal;
 use chrono::{DateTime, Utc, Duration};
-use actix::Arbiter;
-use actix_web::{HttpRequest, HttpResponse, Responder, client, HttpMessage};
+//use actix::Arbiter;
+use actix_web::{
+    HttpRequest,
+    HttpResponse,
+    Responder,
+    AsyncResponder,
+    client,
+    error,
+    HttpMessage,
+    ResponseError,
+};
 use serde_json;
 
 use common::tick::Tick;
@@ -31,6 +40,7 @@ pub fn info(_req: &HttpRequest<State>) -> impl Responder {
     HttpResponse::Ok().body(blurb)
 }
 
+/*
 pub fn dummy_ticks_144(_req: &HttpRequest<State>) -> impl Responder {
     let mut count = 0;
     let numbers: Vec<String> = iter::repeat_with(move || { count += 1; count })
@@ -40,28 +50,20 @@ pub fn dummy_ticks_144(_req: &HttpRequest<State>) -> impl Responder {
     
     HttpResponse::Ok().json(numbers)
 }
+*/
 
-pub fn ticks_last_24h_10_min_spans(req: &HttpRequest<State>) -> impl Responder {
+pub fn ticks_last_24h_10_min_spans(
+    req: &HttpRequest<State>,
+) -> Box<Future<Item = HttpResponse, Error = error::Error>> {
     let now: DateTime<Utc> = Utc::now();
     let mut minutes = 1440;
 
     let state = req.state();
     let folder_url = state.folder_url.clone();
 
-    println!("Base URL: {}", &folder_url);
-
-    /*
-    let full_future = lazy(|| -> FutureResult<(), ()> {
-        result::<(), ()>(Ok(()))
-    });
-
-    let mut full_future = Box::new(full_future);
-     */
-
     let mut fold_futures = Vec::new();
     
-    //for _ in 0..144 {
-    for _ in 0..5 {
+    for _ in 0..144 {
         let subtract = Duration::minutes(minutes);
         let start = now - subtract;
         minutes -= 10;
@@ -75,42 +77,86 @@ pub fn ticks_last_24h_10_min_spans(req: &HttpRequest<State>) -> impl Responder {
         let end_ts = end.timestamp();
 
         let url = format!(
-            "{}/trade_history/btc/usd?from={}&to={}", &folder_url, &start_ts, &end_ts
+            "{}/trade_history/btc/usd/tick?from={}&to={}", &folder_url, &start_ts, &end_ts
         );
-        println!("URL: {}", &url);
 
         let fold_fut = client::get(url.as_str())
             .finish()
-            .unwrap()
+            .expect("Can't prepare client for folder request.")
             .send()
-            .map_err(|_| ())
+            .map_err(|e| {
+                error!("Fold fetch error: {}", &e);
+                FetchFoldError::Client(e)
+            })
             .and_then(|response| {
-                //println!("Response: {:?}", &response);
-                response.body().map_err(|_| ())
+                trace!("RESPONSE: {:?}", &response);
+                response
+                    .body()
+                    .map_err(|e| {
+                        error!("Can't get response payload: {}", &e);
+                        FetchFoldError::Payload(e)
+                    })
             })
             .and_then(|bytes: Bytes| {
-                println!("Response Body: {:?}", &bytes);
-                let tick: Tick = serde_json::from_slice(&bytes).map_err(|_| ())?;
+                trace!("RESPONSE BODY: {:?}", &bytes);
+                let tick: Tick = serde_json::from_slice(&bytes)
+                    .map_err(|e| {
+                        error!("Failed to deserialize tick: {}", &e);
+                        FetchFoldError::Json(e)
+                    })?;
                 Ok(tick)
             });
 
         fold_futures.push(fold_fut);
+
+        println!("Generated client future");
     }
 
     iter_ok(fold_futures.into_iter())
-        .and_then(|fold_fut| fold_fut)
-        .fold(vec![], |numbers, tick| {
-            println!("Tick: {:?}", &tick);
+        .and_then(|fold_fut| {
+            fold_fut
+        })
+        .fold(vec![], |mut numbers, tick| {
+            trace!("Tick: {:?}", &tick);
             numbers.push(*tick.high());
             ok(numbers)
         })
         .and_then(|numbers| {
             Ok(HttpResponse::Ok().json(numbers))
         })
+        .from_err()
         .responder()
-
-/*        
-    let blurb = r##"{"todo":"Finish me."}"##;
-    HttpResponse::Ok().body(blurb)
-*/
 }
+
+#[derive(Debug)]
+enum FetchFoldError {
+    Client(client::SendRequestError),
+    Payload(error::PayloadError),
+    Json(serde_json::error::Error),
+}
+
+impl fmt::Display for FetchFoldError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FetchFoldError::Client(ref err) => write!(f, "Fold fetch error: {}", err),
+            FetchFoldError::Payload(ref err) => write!(f, "Fold fetch error: {}", err),
+            FetchFoldError::Json(ref err) => write!(f, "Fold fetch error: {}", err),
+        }       
+    }
+}
+
+impl std::error::Error for FetchFoldError {
+    fn description(&self) -> &str {
+        "An error with the tick fetching process."
+    }
+
+    fn cause(&self) -> Option<&dyn std::error::Error> {
+        match self {
+            FetchFoldError::Json(ref err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
+impl ResponseError for FetchFoldError { }
+

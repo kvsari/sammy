@@ -28,13 +28,6 @@ fn main() {
         database::TradeHistoryFetcher::new(db_url.as_str())
     });
 
-    /*
-    let th_fetch_addr_clone = th_fetch_addr.clone();
-    let th_fold_addr = SyncArbiter::start(1, move || {
-        fold::TradeHistoryFolder::new(th_fetch_addr_clone.clone())
-    });
-     */
-
     let th_fold = fold::TradeHistoryFolder::new(th_fetch_addr.clone());
     let th_fold_addr = th_fold.start();
 

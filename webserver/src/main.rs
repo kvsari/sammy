@@ -19,6 +19,7 @@ mod handler;
 
 fn main() {
     dotenv::dotenv().ok();
+    env_logger::init();
     let configuration = config::config_from_environment().expect("Can't load config.");
     info!("Starting sammy webserver.");
     debug!("Configuration: {:?}", &configuration);
