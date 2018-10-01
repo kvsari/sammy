@@ -6,14 +6,14 @@ WORKDIR /usr/src/sammy
 
 COPY . .
 
-RUN cd collector && \
+RUN cd folder && \
        cargo build --release && \
        cargo install --path . && \
        cargo clean
 
-ENV RUST_LOG "collector=info"
+ENV RUST_LOG "folder=info"
 ENV RUST_BACKTRACE 1
 
 EXPOSE 8080
 
-ENTRYPOINT ["collector"]
+ENTRYPOINT ["folder"]

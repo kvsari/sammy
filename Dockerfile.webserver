@@ -6,14 +6,17 @@ WORKDIR /usr/src/sammy
 
 COPY . .
 
-RUN cd collector && \
+RUN cd webserver && \
        cargo build --release && \
        cargo install --path . && \
        cargo clean
 
-ENV RUST_LOG "collector=info"
+ENV RUST_LOG "webserver=info,actix_web=info"
 ENV RUST_BACKTRACE 1
 
-EXPOSE 8080
+EXPOSE 80
 
-ENTRYPOINT ["collector"]
+# Change our workdir to the webserver since that's where the html files are
+WORKDIR /usr/src/sammy/webserver
+
+ENTRYPOINT ["webserver"]
