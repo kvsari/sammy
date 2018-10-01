@@ -113,8 +113,6 @@ pub fn ticks_last_24h_10_min_spans(
             });
 
         fold_futures.push(fold_fut);
-
-        println!("Generated client future");
     }
 
     iter_ok(fold_futures.into_iter())
