@@ -118,10 +118,10 @@ pub fn ticks_last_24h_10_min_spans(
         .and_then(|fold_fut| {
             fold_fut
         })
-        .fold(vec![], |mut numbers, tick| {
+        .fold(vec![], |mut ticks, tick| {
             trace!("Tick: {:?}", &tick);
-            numbers.push(*tick.high());
-            ok(numbers)
+            ticks.push(tick);
+            ok(ticks)
         })
         .and_then(|numbers| {
             Ok(HttpResponse::Ok()

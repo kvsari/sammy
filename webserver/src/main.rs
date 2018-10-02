@@ -32,7 +32,7 @@ fn main() {
     server::HttpServer::new(move || {
         App::with_state(state.clone())
             .middleware(Logger::default())
-            //.middleware(middle::DebugRequestHeaders)
+            .middleware(middle::DebugRequestHeaders)
             .scope("/tick", |scope| {
                 scope
                     .resource("", |r| {

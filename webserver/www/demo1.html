@@ -19,10 +19,11 @@
       <canvas id="canvas"></canvas>
     </div>
     <script>    
-      var datapoints = [];
-
+      var highpoints = [];
+      var frequencypoints = [];
       for (var i = 0; i < 144; ++i) {
-          datapoints.push(0);
+          highpoints.push(0);
+          frequencypoints.push(0);
       }
       
       var columns = [
@@ -57,12 +58,19 @@
               labels: columns,
 	      datasets: [{
 		  label: 'Highest per tick',
-		  data: datapoints,
+		  data: highpoints,
 		  borderColor: window.chartColors.green,
 		  backgroundColor: 'rgba(0, 0, 0, 0)',
 		  fill: false,
 		  lineTension: 0
-	      }]
+	      }, {
+                  label: 'Frequency per tick',
+                  data: frequencypoints,
+                  borderColor: window.chartColors.red,
+                  backgroundColor: 'rgba(0, 0, 0, 0)',
+                  fill: false,
+                  lineTension: 0
+              }]
 	  },
 	  options: {
 	      responsive: true,
@@ -109,9 +117,10 @@
           fetch(url)
               .then((response) => response.json())
               .then(function(data) {
-
-                  for (var i = 0, len = datapoints.length; i < len; ++i) {
-                      datapoints[i] = (data[i] > 0) ? data[i]:NaN;
+                  for (var i = 0, len = highpoints.length; i < len; ++i) {
+                      let tick = data[i];
+                      highpoints[i] = (tick.high > 0) ? tick.high:NaN;
+                      frequencypoints[i] = (tick.count > 0) ? tick.count:NaN;
                   }
                   
                   window.myLine.update();
