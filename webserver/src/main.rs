@@ -16,6 +16,7 @@ use actix_web::{server, App, fs, http::Method, middleware::Logger};
 
 mod config;
 mod handler;
+mod middle;
 
 fn main() {
     dotenv::dotenv().ok();
@@ -26,11 +27,12 @@ fn main() {
     
     let system = actix::System::new("sammy webserver");
 
-    let state = handler::State::new(configuration.folder_url());
+    let state = handler::State::new(configuration.folder_url());    
     
     server::HttpServer::new(move || {
         App::with_state(state.clone())
             .middleware(Logger::default())
+            //.middleware(middle::DebugRequestHeaders)
             .scope("/tick", |scope| {
                 scope
                     .resource("", |r| {

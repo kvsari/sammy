@@ -5,9 +5,7 @@ use futures::{Future, Stream};
 use futures::future::ok;
 use futures::stream::iter_ok;
 use bytes::Bytes;
-//use rust_decimal::Decimal;
 use chrono::{DateTime, Utc, Duration};
-//use actix::Arbiter;
 use actix_web::{
     HttpRequest,
     HttpResponse,
@@ -15,6 +13,7 @@ use actix_web::{
     AsyncResponder,
     client,
     error,
+    http::header,
     HttpMessage,
     ResponseError,
 };
@@ -125,7 +124,10 @@ pub fn ticks_last_24h_10_min_spans(
             ok(numbers)
         })
         .and_then(|numbers| {
-            Ok(HttpResponse::Ok().json(numbers))
+            Ok(HttpResponse::Ok()
+               .header(header::CACHE_CONTROL, "no-cache")
+               .json(numbers)
+            )
         })
         .from_err()
         .responder()
