@@ -2044,7 +2044,7 @@ dependencies = [
 
 [[package]]
 name = "webserver"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "actix 0.7.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-web 0.7.8 (registry+https://github.com/rust-lang/crates.io-index)",
