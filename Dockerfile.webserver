@@ -14,7 +14,7 @@ RUN cd webserver && \
 ENV RUST_LOG "webserver=info,actix_web=info"
 ENV RUST_BACKTRACE 1
 
-EXPOSE 30001
+EXPOSE 8080
 
 # Change our workdir to the webserver since that's where the html files are
 WORKDIR /usr/src/sammy/webserver
