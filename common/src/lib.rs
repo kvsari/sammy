@@ -9,3 +9,4 @@ pub mod trade;
 pub mod exchange;
 pub mod asset;
 pub mod tick;
+pub mod errors;

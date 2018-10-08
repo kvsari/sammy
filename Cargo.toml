@@ -3,6 +3,7 @@
 members = [
 	"common",
 	"fetchers/kraken_fetcher",
+	"fetchers/binance",
 	"ticker_db",
 	"webserver",
 	"collector",
