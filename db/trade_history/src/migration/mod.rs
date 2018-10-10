@@ -14,6 +14,7 @@ use schemamama_postgres::PostgresAdapter;
 use error::Error;
 
 mod m01_initial;
+mod m02_add_binance;
 
 /// Prepare all migrations to be run returning the migrator.
 pub fn setup<'a>(
@@ -26,6 +27,7 @@ pub fn setup<'a>(
 
     // Load in all the migrations. Any new migrations must be added in here.
     migrator.register(Box::new(m01_initial::CreateInitial));
+    migrator.register(Box::new(m02_add_binance::MakeAdditions));
 
     Ok(migrator)
 }
