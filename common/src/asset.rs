@@ -68,6 +68,21 @@ impl str::FromStr for Pair {
             "BTCUSD" | "BTC_USD" | "BTC/USD" | "btcusd" | "btc_usd" | "btc/usd" => {
                 Ok(BTC_USD)
             },
+            "ETHUSD" | "ETH_USD" | "ETH/USD" | "ethusd" | "eth_usd" | "eth/usd" => {
+                Ok(ETH_USD)
+            },
+            "BNBBTC" | "BNB_BTC" | "BNB/BTC" | "bnbbtc" | "bnb_btc" | "bnb/btc" => {
+                Ok(BNB_BTC)
+            },
+            "ETHBTC" | "ETH_BTC" | "ETH/BTC" | "ethbtc" | "eth_btc" | "eth/btc" => {
+                Ok(ETH_BTC)
+            },
+            "BNBETH" | "BNB_ETH" | "BNB/ETH" | "bnbeth" | "bnb_eth" | "bnb/eth" => {
+                Ok(BNB_ETH)
+            },
+            "BNBUSD" | "BNB_USD" | "BNB/USD" | "bnbusd" | "bnb_usd" | "bnb/usd" => {
+                Ok(BNB_USD)
+            },
             _ => Err(ParseAssetError),
         }
     }

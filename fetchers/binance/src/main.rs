@@ -20,10 +20,4 @@ fn main() {
     ws::connect("wss://stream.binance.com:9443/ws/bnbbtc@trade", |out| {
         lib::Client::new(out)
     }).unwrap();
-
-    /*
-    loop {
-        ::std::thread::sleep_ms(1000);
-    }
-    */
 }
