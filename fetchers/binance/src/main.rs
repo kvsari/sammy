@@ -17,7 +17,9 @@ fn main() {
     let configuration = config::config_from_environment().expect("Can't load config.");
     debug!("Configuration: {:?}", &configuration);
 
-    ws::connect("wss://stream.binance.com:9443/ws/bnbbtc@trade", |out| {
+    // Get the streams?
+
+    ws::connect("wss://stream.binance.com:9443/stream?streams=bnbbtc@trade/bnbusd@trade", |out| {
         lib::Client::new(out)
     }).unwrap();
 }

@@ -1,7 +1,13 @@
 //! Code
+#[macro_use] extern crate serde_derive;
+extern crate serde;
+extern crate serde_json;
+extern crate rust_decimal;
 extern crate ws;
 
 use ws::{Sender, Handler, Message, Handshake};
+
+mod payload;
 
 pub struct Client {
     out: Sender,
@@ -22,7 +28,8 @@ impl Handler for Client {
     }
 
     fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
-        println!("Got message: {}", &msg);
+        let json = msg.as_text()?;
+        println!("JSON: {}", json);
         Ok(())
     }
 
