@@ -12,6 +12,8 @@ extern crate binance_lib as lib;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
+use common::asset;
+
 mod config;
 
 fn main() {
@@ -20,14 +22,9 @@ fn main() {
     let configuration = config::config_from_environment().expect("Can't load config.");
     debug!("Configuration: {:?}", &configuration);
 
-    // Get the streams?
+    let request = lib::StreamRequest::new()
+        .add_trade_history_item_stream(asset::BNB_BTC);
 
-    /*
-    ws::connect("wss://stream.binance.com:9443/stream?streams=bnbbtc@trade/bnbusd@trade", |out| {
-        lib::Client::new(out)
-    }).unwrap();
-     */
-
-    lib::stream(Vec::new(), Arc::new(AtomicBool::new(false)))
+    lib::stream(request, Arc::new(AtomicBool::new(false)))
         .expect("Can't start stream.");
 }

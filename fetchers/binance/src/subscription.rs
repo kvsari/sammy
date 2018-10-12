@@ -30,11 +30,17 @@ pub struct StreamRequest {
 }
 
 impl StreamRequest {
-    pub fn new<T: Into<String>>(base: T) -> Self {
+    pub fn new() -> Self {
         StreamRequest {
-            base: base.into(),
+            base: DEFAULT_BINANCE_WEBSOCKET_BASE_URI.into(),
             streams: Vec::new(),
         }
+    }
+
+    pub fn set_base_uri<T: Into<String>>(mut self, base: T) -> Self {
+        let base: String = base.into();
+        self.base = base;
+        self
     }
 
     pub fn add_trade_history_item_stream(mut self, pair: asset::Pair) -> Self {
@@ -71,7 +77,7 @@ mod tests {
 
     #[test]
     fn subscribe_one_trade_history_stream() {
-        let req = StreamRequest::new(DEFAULT_BINANCE_WEBSOCKET_BASE_URI)
+        let req = StreamRequest::new()
             .add_trade_history_item_stream(asset::BTC_USD);
 
         assert_eq!(req.url(), "wss://stream.binance.com:9443/stream?streams=btcusd@trade");
@@ -79,7 +85,7 @@ mod tests {
 
     #[test]
     fn subscribe_two_trade_history_streams() {
-        let req = StreamRequest::new(DEFAULT_BINANCE_WEBSOCKET_BASE_URI)
+        let req = StreamRequest::new()
             .add_trade_history_item_stream(asset::BNB_BTC)
             .add_trade_history_item_stream(asset::BNB_USD);
 

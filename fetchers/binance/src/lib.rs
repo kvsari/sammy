@@ -15,3 +15,4 @@ mod payload;
 mod fetch;
 
 pub use self::fetch::stream;
+pub use self::subscription::StreamRequest;

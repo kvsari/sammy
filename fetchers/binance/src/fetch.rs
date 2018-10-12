@@ -9,6 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use serde_json;
 use ws::{self, Sender, Handler, Message, Handshake, util::Token, CloseCode};
 
+use super::StreamRequest;
 use payload;
 
 const CHECK_FOR_STOP: Token = Token(1);
@@ -77,14 +78,11 @@ impl Handler for Client {
 
 
 /// Starts websocket connection within reconnect loop. Blocks calling thread.
-pub fn stream(
-    /*base: &str,*/ subscriptions: Vec<String>, stop: Arc<AtomicBool>
+pub fn stream(subscription: StreamRequest, stop: Arc<AtomicBool>
 ) -> Result<(), String> {
-    /*
-    ws::connect("wss://stream.binance.com:9443/stream?streams=bnbbtc@trade/bnbusd@trade", |out| {
-        Client::new(out, stop.clone())
+    ws::connect(subscription.url(), |sender| {
+        Client::new(sender, stop.clone())
     }).unwrap();
-    */
 
     Ok(())
 }
