@@ -1,7 +1,7 @@
 //! Asset types.
 use std::{fmt, error, str};
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Asset {
     BTC,
     ETH,
@@ -40,7 +40,7 @@ impl fmt::Display for Asset {
     }
 }
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Pair {
     left: Asset,
     right: Asset,
@@ -64,6 +64,7 @@ impl str::FromStr for Pair {
     type Err = ParseAssetError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // TODO: Use `regex` crate.
         match s {
             "BTCUSD" | "BTC_USD" | "BTC/USD" | "btcusd" | "btc_usd" | "btc/usd" => {
                 Ok(BTC_USD)
