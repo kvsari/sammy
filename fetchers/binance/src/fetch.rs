@@ -68,11 +68,6 @@ impl Handler for Client {
         }
         Ok(())
     }
-
-    fn on_error(&mut self, err: ws::Error) {
-        error!("Encountered error: {:?}", &err);
-        //TODO: Do something with the error.
-    }
 }
 
 
@@ -80,9 +75,16 @@ impl Handler for Client {
 /// Starts websocket connection within reconnect loop. Blocks calling thread.
 pub fn stream(subscription: StreamRequest, stop: Arc<AtomicBool>
 ) -> Result<(), String> {
-    ws::connect(subscription.url(), |sender| {
-        Client::new(sender, stop.clone())
-    }).unwrap();
+    while !stop.load(Ordering::Relaxed) {
+        match ws::connect(subscription.url(), |sender| Client::new(sender, stop.clone())) {
+            Ok(()) => (), // Stopped normally.
+            Err(e) => {
+                error!("Encountered error: {}", &e);
+                // TODO: Do something with the error.
+                // TODO: Back off on reconnecting. Add a delay.
+            },
+        }
+    }
 
     Ok(())
 }

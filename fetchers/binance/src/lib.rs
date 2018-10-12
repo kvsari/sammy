@@ -8,8 +8,6 @@ extern crate ws;
 
 extern crate common;
 
-use ws::{Sender, Handler, Message, Handshake};
-
 mod subscription;
 mod payload;
 mod fetch;
