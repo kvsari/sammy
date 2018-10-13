@@ -12,6 +12,10 @@ path = "src/bin/db_migrate_up.rs"
 name = "trade_history_reverse"
 path = "src/bin/db_migrate_down.rs"
 
+[[bin]]
+name = "migrator"
+path = "src/bin/migrator.rs"
+
 [dependencies]
 log = "0.4.5"
 env_logger = "0.5.13"
@@ -24,6 +28,7 @@ schemamama = "0.3.0"
 schemamama_postgres = "0.2.2"
 postgres = { version = "0.15.2", features = ["with-chrono"] }
 dotenv = "0.13.0"
+clap = "2.32.0"
 
 # Internal sammy project crates
 common = { path = "../../common" }

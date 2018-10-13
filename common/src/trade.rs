@@ -83,12 +83,33 @@ impl error::Error for TradeTypeParseError {
 /// aught to be derived from its storage/usage context.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TradeHistoryItem {
+    /// When when this item was created on the exchange. This is the default time entry
+    /// used for searches.
     timestamp: DateTime<Utc>,
     size: Decimal,
     price: Decimal,
     market: Market,
     trade: Type,
+
     //meta: String,
+
+    /*
+    /// If the trade match has an ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    match_id: Option<u64>,
+
+    /// ID of the buy order.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    buy_order_id: Option<u64>,
+
+    /// ID of the sell order
+    #[serde(skip_serializing_if = "Option::is_none")]
+    sell_order_id: Option<u64>,
+
+    /// Time when the match actually occured.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    match_timestamp: Option<DateTime<Utc>>,
+    */
 }
 
 impl TradeHistoryItem {
@@ -98,9 +119,25 @@ impl TradeHistoryItem {
         price: Decimal,
         market: Market,
         trade: Type,
+        /*
+        match_id: Option<u64>,
+        buy_order_id: Option<u64>,
+        sell_order_id: Option<u64>,
+        match_timestamp: Option<DateTime<Utc>>,
+        */
     ) -> Self {
         TradeHistoryItem {
-            timestamp, size, price, market, trade
+            timestamp,
+            size,
+            price,
+            market,
+            trade,
+            /*
+            match_id,
+            buy_order_id,
+            sell_order_id,
+            match_timestamp,
+            */
         }
     }
     
@@ -123,4 +160,22 @@ impl TradeHistoryItem {
     pub fn trade(&self) -> Type {
         self.trade
     }
+
+    /*
+    pub fn match_id(&self) -> Option<u64> {
+        self.match_id
+    }
+
+    pub fn buy_order_id(&self) -> Option<u64> {
+        self.buy_order_id
+    }
+
+    pub fn sell_order_id(&self) -> Option<u64> {
+        self.sell_order_id
+    }
+
+    pub fn match_timestamp(&self) -> Option<DateTime<Utc>> {
+        self.match_timestamp
+    }
+    */
 }
