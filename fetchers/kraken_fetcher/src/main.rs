@@ -9,7 +9,7 @@ extern crate common;
 
 extern crate kraken_fetcher_lib as lib;
 
-use futures::{Stream, Future};
+use futures::Stream;
 use futures::future::{Either, lazy, result, FutureResult};
 
 mod config;
@@ -27,7 +27,7 @@ fn main() {
             let put_target = targets.trade_history_uri(&config.asset_pair())
                 .expect("Invalid Asset Pair target.");
             debug!("Translator put target: {}", &put_target);
-            let raw_fetch_stream = lib::poll_trade_history2(
+            let raw_fetch_stream = lib::poll_trade_history(
                 client.clone(), common::asset::BTC_USD, lib::KrakenFetchTargets,
             );
             let filtered_fetch_stream = lib::filter_benign_errors(raw_fetch_stream);
@@ -36,8 +36,6 @@ fn main() {
                 client.clone(), put_target, converted_stream
             );
             let future = place_stream.for_each(|()| {
-                //println!("Placed history: {:?}", &history);
-                println!("Placed items.");
                 Ok(())
             });
             

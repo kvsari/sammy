@@ -76,11 +76,11 @@ pub struct Outer<T: Inner + Clone + Debug> {
 }
 
 impl<T: Inner + Clone + Debug> Outer<T> {
-    fn error(&self) -> &[String] {
+    pub fn error(&self) -> &[String] {
         self.error.as_slice()
     }
 
-    fn result(&self) -> Option<&T> {
+    pub fn result(&self) -> Option<&T> {
         self.result.as_ref()
     }
 

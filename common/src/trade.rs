@@ -93,7 +93,6 @@ pub struct TradeHistoryItem {
 
     //meta: String,
 
-    /*
     /// If the trade match has an ID
     #[serde(skip_serializing_if = "Option::is_none")]
     match_id: Option<u64>,
@@ -109,7 +108,6 @@ pub struct TradeHistoryItem {
     /// Time when the match actually occured.
     #[serde(skip_serializing_if = "Option::is_none")]
     match_timestamp: Option<DateTime<Utc>>,
-    */
 }
 
 impl TradeHistoryItem {
@@ -119,12 +117,10 @@ impl TradeHistoryItem {
         price: Decimal,
         market: Market,
         trade: Type,
-        /*
         match_id: Option<u64>,
         buy_order_id: Option<u64>,
         sell_order_id: Option<u64>,
         match_timestamp: Option<DateTime<Utc>>,
-        */
     ) -> Self {
         TradeHistoryItem {
             timestamp,
@@ -132,12 +128,10 @@ impl TradeHistoryItem {
             price,
             market,
             trade,
-            /*
             match_id,
             buy_order_id,
             sell_order_id,
             match_timestamp,
-            */
         }
     }
     
@@ -161,7 +155,6 @@ impl TradeHistoryItem {
         self.trade
     }
 
-    /*
     pub fn match_id(&self) -> Option<u64> {
         self.match_id
     }
@@ -177,5 +170,4 @@ impl TradeHistoryItem {
     pub fn match_timestamp(&self) -> Option<DateTime<Utc>> {
         self.match_timestamp
     }
-    */
 }

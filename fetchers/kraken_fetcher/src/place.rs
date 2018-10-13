@@ -6,7 +6,6 @@ use serde_json;
 use common::trade;
 
 use https_client::HttpsClient;
-use targets::TranslatorTargets;
 
 /// Receives a stream of common trade history items. Places them using the provided client.
 /// Placement stream yields, the items input that have been successfully placed. Otherwise
@@ -25,11 +24,11 @@ pub fn put_trade_history(
         })
         .then(|result| match result {            
             Ok(rsp) => {
-                println!("Success: {}", &rsp.status());
+                trace!("Placement success: {}", &rsp.status());
                 Ok(())
             },
             Err(()) => {
-                println!("Failure");
+                trace!("Placement failure");
                 Err(())
             },
         })
