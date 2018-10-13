@@ -78,6 +78,14 @@ pub struct ReqLastHistoryItem {
     asset_pair: asset::Pair,
 }
 
+impl ReqLastHistoryItem {
+    pub fn new(exchange: exchange::Exchange, asset_pair: asset::Pair) -> Self {
+        ReqLastHistoryItem {
+            exchange, asset_pair,
+        }
+    }
+}
+
 impl Message for ReqLastHistoryItem {
     type Result = Option<model::TradeItem>;
 }

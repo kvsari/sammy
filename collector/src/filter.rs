@@ -5,11 +5,12 @@ use std::io;
 use futures::Future;
 use futures::future::{self, lazy, FutureResult};
 use chrono::{DateTime, Utc, TimeZone};
+use actix::fut::{self, IntoActorFuture};
 use actix::prelude::*;
 
 use common::{asset, trade, exchange};
 
-use database::{NewTradeHistory, TradeHistoryStorer};
+use database::{NewTradeHistory, TradeHistoryStorer, ReqLastHistoryItem};
 
 lazy_static! {
     static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
@@ -57,6 +58,9 @@ impl Actor for KrakenTradeHistory {
 
     fn started(&mut self, ctx: &mut Context<Self>) {
         debug!("Kraken Trade History filter started.");
+
+        // TODO: Setup future that will fill the timestamp_marker with timestamps for all
+        //       asset pairs in the database.
     }
 
     fn stopped(&mut self, ctx: &mut Context<Self>) {
@@ -96,11 +100,47 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
 
     fn handle(&mut self, msg: ToFilterTradeHistory, ctx: &mut Self::Context) {
         let asset_pair = msg.asset_pair;
-        let mut history = msg.history;
 
+        /*
         // Add fetching of timestamp marker from storer here.
-        let ts = *self.timestamp_marker.get(&asset_pair).unwrap_or(&YR2000);
+        let ts = match self.timestamp_marker.get(&asset_pair) {
+            Some(timestamp) => *timestamp,
+            None => {
+                // TODO: Fetch the timestamp from the DB if any
+                let request = ReqLastHistoryItem::new(
+                    exchange::Exchange::Kraken, asset_pair
+                );
+                let fetch_last_timestamp = self.storer
+                    .send(request)
+                    .map_err(|_| ());
+                let update_self = fut::wrap_future::<_, Self>(fetch_last_timestamp)
+                    .and_then(move |item, actor, ctx| {
+                        let timestamp = item
+                            .map(|hi| *hi.timestamp())
+                            .unwrap_or(*YR2000);
+                        actor.timestamp_marker.insert(asset_pair, timestamp);
 
+                        // Resend the msg to the handler
+                        let self_addr = ctx.address();
+                        Arbiter::spawn(lazy(move || {
+                            self_addr
+                                .send(msg)
+                                .map_err(|_| ())
+                        }));
+                        
+                        fut::ok::<(), (), Self>(())
+                    })
+                    .into_future();
+
+                Arbiter::spawn(update_self);
+
+                // We break out of the method.
+                return;
+            },
+        };
+        */
+
+        let mut history = msg.history;
         history.retain(move |item| item.timestamp() > ts);
 
         // Only process further if there's data.
