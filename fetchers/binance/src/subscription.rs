@@ -24,6 +24,7 @@ impl fmt::Display for StreamType {
 }
 
 /// Build a websocket subscription request.
+#[derive(Debug, Clone)]
 pub struct StreamRequest {
     base: String,
     streams: Vec<StreamType>,
