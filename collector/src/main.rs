@@ -25,10 +25,13 @@ fn main() {
     let storer = database::TradeHistoryStorer::new(config.database_url());
     let storer_addr = storer.start();
 
-    let kraken_filter = filter::KrakenTradeHistory::new(storer_addr);
-    let kf_addr = kraken_filter.start();    
+    let kraken_filter = filter::KrakenTradeHistory::new(storer_addr.clone());
+    let kf_addr = kraken_filter.start();
 
-    let rest_state = lib::restful::State::new(kf_addr);
+    let binance_filter = filter::BinanceTradeHistory::new(storer_addr);
+    let bf_addr = binance_filter.start();
+
+    let rest_state = lib::restful::State::new(kf_addr, bf_addr);
 
     HttpServer::new(move || {
         App::with_state(rest_state.clone())

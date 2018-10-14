@@ -64,6 +64,10 @@ impl Handler<NewTradeHistory> for TradeHistoryStorer {
                 item.price(),
                 item.market(),
                 item.trade(),
+                item.match_id(),
+                item.buy_order_id(),
+                item.sell_order_id(),
+                item.match_timestamp(),
             ))
             .collect();
 

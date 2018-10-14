@@ -118,8 +118,9 @@ impl Trades {
         //let transaction = self.connection.transaction()?;
         let create_stmt = self.connection.prepare_cached(
             "INSERT INTO trade_history_items \
-             ( exchange, asset_pair, happened, match_size, match_price, market, trade ) \
-             VALUES ( $1, $2, $3, $4, $5, $6, $7 ) \
+             ( exchange, asset_pair, happened, match_size, match_price, market, trade, \
+               match_id, buy_order_id, sell_order_id, match_ts ) \
+             VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 ) \
              RETURNING *"
         )?;
 
@@ -131,7 +132,17 @@ impl Trades {
                 let tt_id = self.tt_ids.get(fti.trade()).ok_or("Invalid trade")?;
                 
                 let rows = create_stmt.query(&[
-                    ex_id, ap_id, fti.timestamp(), fti.size(), fti.price(), tm_id, tt_id
+                    ex_id,
+                    ap_id,
+                    fti.timestamp(),
+                    fti.size(),
+                    fti.price(),
+                    tm_id,
+                    tt_id,
+                    fti.match_id(),
+                    fti.buy_order_id(),
+                    fti.sell_order_id(),
+                    fti.match_timestamp(),
                 ])?;
 
                 // Only one row should be returned here.

@@ -1,5 +1,7 @@
 //! Handlers for the RESTful resources
+use futures::sync::oneshot;
 use futures::{Stream, Future, future};
+use actix::Arbiter;
 use actix_web::{
     HttpRequest, HttpResponse, HttpMessage, Responder, error, AsyncResponder,
 };
@@ -79,7 +81,7 @@ pub fn trade_match_asset_pair(req: &HttpRequest<State>) -> impl Responder {
     //println!("Right Asset: {}", &rasset);
 
     // Return a static string for now.
-    let json = r##"["kraken"]"##;
+    let json = r##"["kraken", "binance"]"##;
     HttpResponse::Ok().body(json)
 }
 
@@ -103,14 +105,15 @@ pub fn trade_match_put(
     
     let left_asset: Asset = parse_path_segment!(lasset);
     let right_asset: Asset = parse_path_segment!(rasset);
-    let _exchange: Exchange = parse_path_segment!(exchange);
+    let exchange: Exchange = parse_path_segment!(exchange);
 
     let asset_pair = asset::Pair::new(left_asset, right_asset);
 
     // TODO
     // Validate that the exchange/asset_pair is valid.
 
-    let k_filter = req.state().kraken_filter().clone();
+    //let k_filter = req.state().kraken_filter().clone();
+    let state = req.state().clone();
 
     // Now grab the raw JSON data and deal with it.
     req.payload()
@@ -136,16 +139,40 @@ pub fn trade_match_put(
 
             // Forward the deserialized data off to the filter.
             let message = UnfilteredTradeHistory::new(asset_pair, history);
-            k_filter
-                .send(message)
+            let (inform, callback) = oneshot::channel();
+            match exchange {
+                Exchange::Kraken => {
+                    let future = state.kraken_filter()
+                        .send(message)
+                        .then(move |result| inform.send(result))
+                        .map_err(|e| error!("Can't inform filter response: {:?}", &e));
+                    Arbiter::spawn(future);
+                },
+                Exchange::Binance => {
+                    let future = state.binance_filter()
+                        .send(message)
+                        .then(move |result| inform.send(result))
+                        .map_err(|e| error!("Can't inform filter response: {:?}", &e));
+                    Arbiter::spawn(future);
+                },
+            }
+
+            callback                
                 .then(move |result| match result {
-                    Ok(()) => {
-                        // Return the count of records received to the client.
-                        let received = TradeHistoryResponse::new(count as u64);
-                        Ok(HttpResponse::Ok().json(received))
+                    Ok(result) => match result {
+                        Ok(()) => {
+                            // Return the count of records received to the client.
+                            let received = TradeHistoryResponse::new(count as u64);
+                            Ok(HttpResponse::Ok().json(received))
+                        },
+                        Err(e) => {
+                            error!("Actix error: {}", &e);
+                            // TODO: Make the origin clearer.
+                            Ok(HttpResponse::InternalServerError().finish())
+                        },
                     },
                     Err(e) => {
-                        error!("Actix error: {}", &e);
+                        error!("Callback channel error: {}", &e);
                         // TODO: Make the origin clearer.
                         Ok(HttpResponse::InternalServerError().finish())
                     },

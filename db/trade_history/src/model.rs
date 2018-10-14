@@ -14,6 +14,11 @@ pub struct FreshTradeItem {
     price: Decimal,
     market: trade::Market,
     trade: trade::Type,
+
+    match_id: Option<i64>,
+    buy_order_id: Option<i64>,
+    sell_order_id: Option<i64>,
+    match_timestamp: Option<DateTime<Utc>>,
 }
 
 impl FreshTradeItem {
@@ -25,9 +30,23 @@ impl FreshTradeItem {
         price: Decimal,
         market: trade::Market,
         trade: trade::Type,
+        match_id: Option<i64>,
+        buy_order_id: Option<i64>,
+        sell_order_id: Option<i64>,
+        match_timestamp: Option<DateTime<Utc>>,
     ) -> Self {
         FreshTradeItem {
-            exchange, asset_pair, timestamp, size, price, market, trade
+            exchange,
+            asset_pair,
+            timestamp,
+            size,
+            price,
+            market,
+            trade,
+            match_id,
+            buy_order_id,
+            sell_order_id,
+            match_timestamp,
         }
     }
 }

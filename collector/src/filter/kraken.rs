@@ -1,4 +1,4 @@
-//! Filter trade history actors.
+//! Filter for kraken
 use std::collections::HashMap;
 
 use futures::Future;
@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc, TimeZone};
 use actix::prelude::*;
 
 use common::{asset, trade, exchange};
+use super::UnfilteredTradeHistory;
 
 use database::{
     NewTradeHistory, TradeHistoryStorer, ReqLastHistoryItem, ReqAllLloadAssetPairs
@@ -14,21 +15,6 @@ use database::{
 
 lazy_static! {
     static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
-}
-
-#[derive(Message)]
-pub struct UnfilteredTradeHistory {
-    asset_pair: asset::Pair,
-    history: Vec<trade::TradeHistoryItem>,
-}
-
-impl UnfilteredTradeHistory {
-    pub fn new(asset_pair: asset::Pair, history: Vec<trade::TradeHistoryItem>) -> Self {
-        UnfilteredTradeHistory {
-            asset_pair,
-            history,
-        }
-    }
 }
 
 #[derive(Message)]
@@ -152,7 +138,7 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
         if let Some(item) = history.last().map(|i| *i) {
             self.timestamp_marker.insert(asset_pair, item.timestamp());
             trace!(
-                "{} new {} kraken trade history item(s). Sending to ticker generator.",
+                "{} new {} kraken trade history item(s). Sending to DB store.",
                 &asset_pair,
                 &history.len(),
             );
@@ -163,7 +149,7 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
             );
 
             let send_future = self.storer.send(new_trade_history)
-                .map_err(|e| error!("Can't send to storer! {}", &e));
+                .map_err(|e| error!("Kraken filter can't send to storer! {}", &e));
 
             Arbiter::spawn(send_future);
         }
