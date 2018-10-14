@@ -1,7 +1,7 @@
 //! Handlers for the RESTful resources
 use futures::{Stream, Future, future};
 use actix_web::{
-    HttpRequest, HttpResponse, HttpMessage, Responder, error, AsyncResponder, http,
+    HttpRequest, HttpResponse, HttpMessage, Responder, error, AsyncResponder,
 };
 use bytes::BytesMut;
 use serde_json;
@@ -55,12 +55,12 @@ pub fn trade_match_root(_req: &HttpRequest<State>) -> impl Responder {
 }
 
 pub fn trade_match_left_asset(req: &HttpRequest<State>) -> impl Responder {
-    let lasset = req.match_info().get("left_asset")
+    let _lasset = req.match_info().get("left_asset")
         .expect("Invalid use of function. Need to have {left_asset} on path.");
 
     // TODO
     // Match with state on valid asset or not
-    println!("Left Asset: {}", &lasset);
+    //println!("Left Asset: {}", &lasset);
 
     // Return a static string for now.
     let json = r##"["USD"]"##;
@@ -68,15 +68,15 @@ pub fn trade_match_left_asset(req: &HttpRequest<State>) -> impl Responder {
 }
 
 pub fn trade_match_asset_pair(req: &HttpRequest<State>) -> impl Responder {
-    let lasset = req.match_info().get("left_asset")
+    let _lasset = req.match_info().get("left_asset")
         .expect("Invalid use of function. Need to have {left_asset} on path.");
-    let rasset = req.match_info().get("right_asset")
+    let _rasset = req.match_info().get("right_asset")
         .expect("Invalid use of function. Need to have {right_asset} on path.");
 
     // TODO
     // Match with state on valid assets or not. Then check that the pair is valid.
-    println!("Left Asset: {}", &lasset);
-    println!("Right Asset: {}", &rasset);
+    //println!("Left Asset: {}", &lasset);
+    //println!("Right Asset: {}", &rasset);
 
     // Return a static string for now.
     let json = r##"["kraken"]"##;
@@ -97,13 +97,13 @@ pub fn trade_match_put(
     // TODO
     // Match with state on valid assets or not. Then check that the pair is valid. Then
     // check if the exchange is valid.
-    println!("Left Asset: {}", &lasset);
-    println!("Right Asset: {}", &rasset);
-    println!("Exchange: {}", &exchange);
+    //println!("Left Asset: {}", &lasset);
+    //println!("Right Asset: {}", &rasset);
+    //println!("Exchange: {}", &exchange);
     
     let left_asset: Asset = parse_path_segment!(lasset);
     let right_asset: Asset = parse_path_segment!(rasset);
-    let exchange: Exchange = parse_path_segment!(exchange);
+    let _exchange: Exchange = parse_path_segment!(exchange);
 
     let asset_pair = asset::Pair::new(left_asset, right_asset);
 
@@ -140,14 +140,13 @@ pub fn trade_match_put(
                 .send(message)
                 .then(move |result| match result {
                     Ok(()) => {
-                        println!("Returning!");
                         // Return the count of records received to the client.
                         let received = TradeHistoryResponse::new(count as u64);
                         Ok(HttpResponse::Ok().json(received))
                     },
                     Err(e) => {
-                        // Error with Actix
-                        // TODO: Make the origin clearer. And log!
+                        error!("Actix error: {}", &e);
+                        // TODO: Make the origin clearer.
                         Ok(HttpResponse::InternalServerError().finish())
                     },
                 })

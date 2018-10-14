@@ -1,6 +1,5 @@
 //! Database actor
 
-use actix::dev::MessageResponse;
 use actix::prelude::*;
 
 use common::{exchange, trade, asset};
@@ -52,7 +51,7 @@ impl Actor for TradeHistoryStorer {
 impl Handler<NewTradeHistory> for TradeHistoryStorer {
     type Result = ();
 
-    fn handle(&mut self, msg: NewTradeHistory, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: NewTradeHistory, _ctx: &mut Self::Context) {
         let exchange = msg.exchange;
         let asset_pair = msg.asset_pair;
         let ftis: Vec<model::FreshTradeItem> = msg.items
@@ -94,7 +93,7 @@ impl Message for ReqLastHistoryItem {
 impl Handler<ReqLastHistoryItem> for TradeHistoryStorer {
     type Result = Option<model::TradeItem>;
 
-    fn handle(&mut self, msg: ReqLastHistoryItem, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: ReqLastHistoryItem, _: &mut Self::Context) -> Self::Result {
         self.executor.read_last_item(msg.exchange, msg.asset_pair)
             .expect("Couldn't read from DB.")
     }

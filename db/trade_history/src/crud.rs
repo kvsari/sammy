@@ -152,7 +152,6 @@ impl Trades {
             })?;
 
         //transaction.finish()?;
-        println!("Success!");
         Ok(itis)
     }
 

@@ -1,11 +1,9 @@
 //! Filter trade history actors.
 use std::collections::HashMap;
-use std::io;
 
 use futures::Future;
-use futures::future::{self, lazy, FutureResult};
+use futures::future::lazy;
 use chrono::{DateTime, Utc, TimeZone};
-use actix::fut::{self, IntoActorFuture};
 use actix::prelude::*;
 
 use common::{asset, trade, exchange};
@@ -73,7 +71,7 @@ impl Actor for KrakenTradeHistory {
 
         let update_future = self.storer
             .send(ReqAllLloadAssetPairs)
-            .map_err(|e| error!("Can't get asset pair list from database actor."))
+            .map_err(|e| error!("Can't get asset pair list from database actor: {}", &e))
             .map(|option| option.expect("Must always be `Some(Vec<asset::Pair>)`!"))
             .and_then(move |list| {
                 list.into_iter()
@@ -93,7 +91,9 @@ impl Actor for KrakenTradeHistory {
                                 };
                                 self_addr_clone.send(update)
                             })
-                            .map_err(|e| error!("Can't update asset pair timestamp."));
+                            .map_err(|e| error!(
+                                "Can't update asset pair timestamp: {}", &e
+                            ));
 
                         Arbiter::spawn(ts_fut);
                     });
@@ -105,7 +105,7 @@ impl Actor for KrakenTradeHistory {
         debug!("Kraken Trade History filter started.");
     }
 
-    fn stopped(&mut self, ctx: &mut Context<Self>) {
+    fn stopped(&mut self, _ctx: &mut Context<Self>) {
         debug!("Kraken Trade History filter stopped.");
     }
 }
@@ -140,49 +140,10 @@ impl Handler<UnfilteredTradeHistory> for KrakenTradeHistory {
 impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
     type Result = ();
 
-    fn handle(&mut self, msg: ToFilterTradeHistory, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: ToFilterTradeHistory, _ctx: &mut Self::Context) {
         let asset_pair = msg.asset_pair;
 
         let ts = *self.timestamp_marker.get(&asset_pair).unwrap_or(&YR2000);
-        
-        /*
-        // Add fetching of timestamp marker from storer here.
-        let ts = match self.timestamp_marker.get(&asset_pair) {
-            Some(timestamp) => *timestamp,
-            None => {
-                // TODO: Fetch the timestamp from the DB if any
-                let request = ReqLastHistoryItem::new(
-                    exchange::Exchange::Kraken, asset_pair
-                );
-                let fetch_last_timestamp = self.storer
-                    .send(request)
-                    .map_err(|_| ());
-                let update_self = fut::wrap_future::<_, Self>(fetch_last_timestamp)
-                    .and_then(move |item, actor, ctx| {
-                        let timestamp = item
-                            .map(|hi| *hi.timestamp())
-                            .unwrap_or(*YR2000);
-                        actor.timestamp_marker.insert(asset_pair, timestamp);
-
-                        // Resend the msg to the handler
-                        let self_addr = ctx.address();
-                        Arbiter::spawn(lazy(move || {
-                            self_addr
-                                .send(msg)
-                                .map_err(|_| ())
-                        }));
-                        
-                        fut::ok::<(), (), Self>(())
-                    })
-                    .into_future();
-
-                Arbiter::spawn(update_self);
-
-                // We break out of the method.
-                return;
-            },
-        };
-        */
 
         let mut history = msg.history;
         history.retain(move |item| item.timestamp() > ts);
@@ -212,7 +173,7 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
 impl Handler<UpdateTimestampMarker> for KrakenTradeHistory {
     type Result = ();
 
-    fn handle(&mut self, msg: UpdateTimestampMarker, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: UpdateTimestampMarker, _ctx: &mut Self::Context) {
         self.timestamp_marker.insert(msg.asset_pair, msg.timestamp);
     }
 }
