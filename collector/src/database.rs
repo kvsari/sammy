@@ -1,5 +1,6 @@
 //! Database actor
 
+use actix::dev::MessageResponse;
 use actix::prelude::*;
 
 use common::{exchange, trade, asset};
@@ -96,5 +97,21 @@ impl Handler<ReqLastHistoryItem> for TradeHistoryStorer {
     fn handle(&mut self, msg: ReqLastHistoryItem, ctx: &mut Self::Context) -> Self::Result {
         self.executor.read_last_item(msg.exchange, msg.asset_pair)
             .expect("Couldn't read from DB.")
+    }
+}
+
+/// Request all asset pairs that have been loaded into the database
+#[derive(Debug, Copy, Clone)]
+pub struct ReqAllLloadAssetPairs;
+
+impl Message for ReqAllLloadAssetPairs {
+    type Result = Option<Vec<asset::Pair>>;
+}
+
+impl Handler<ReqAllLloadAssetPairs> for TradeHistoryStorer {
+    type Result = Option<Vec<asset::Pair>>;
+
+    fn handle(&mut self, _: ReqAllLloadAssetPairs, _: &mut Self::Context) -> Self::Result {
+        Some(self.executor.asset_pairs())
     }
 }

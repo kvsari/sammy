@@ -10,7 +10,9 @@ use actix::prelude::*;
 
 use common::{asset, trade, exchange};
 
-use database::{NewTradeHistory, TradeHistoryStorer, ReqLastHistoryItem};
+use database::{
+    NewTradeHistory, TradeHistoryStorer, ReqLastHistoryItem, ReqAllLloadAssetPairs
+};
 
 lazy_static! {
     static ref YR2000: DateTime<Utc> = Utc.ymd(2000, 1, 1).and_hms(0, 0, 0);
@@ -37,6 +39,12 @@ struct ToFilterTradeHistory {
     history: Vec<trade::TradeHistoryItem>,
 }
 
+#[derive(Message)]
+struct UpdateTimestampMarker {
+    asset_pair: asset::Pair,
+    timestamp: DateTime<Utc>,
+}
+
 /// Filter optimized for kraken trade history. This will ensure that only new items are
 /// forwarded on through the system.
 pub struct KrakenTradeHistory {
@@ -57,10 +65,44 @@ impl Actor for KrakenTradeHistory {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Context<Self>) {
-        debug!("Kraken Trade History filter started.");
-
         // TODO: Setup future that will fill the timestamp_marker with timestamps for all
         //       asset pairs in the database.
+        let self_addr = ctx.address();
+        let storer_addr = self.storer.clone();
+        let kraken = exchange::Exchange::Kraken;
+
+        let update_future = self.storer
+            .send(ReqAllLloadAssetPairs)
+            .map_err(|e| error!("Can't get asset pair list from database actor."))
+            .map(|option| option.expect("Must always be `Some(Vec<asset::Pair>)`!"))
+            .and_then(move |list| {
+                list.into_iter()
+                    .for_each(|ap| {
+                        //println!("Asset Pair: {}", &ap);
+                        let self_addr_clone = self_addr.clone();
+                        let request = ReqLastHistoryItem::new(kraken, ap);
+                        let ts_fut = storer_addr.send(request)
+                            //.map_err(|e| error!("Can't get last trade history item."))
+                            .map(move |maybie| maybie
+                                 .map(|item| (*item.timestamp(), ap))
+                                 .unwrap_or((*YR2000, ap)))
+                            .and_then(move |(ts, ap)| {
+                                let update = UpdateTimestampMarker {
+                                    asset_pair: ap,
+                                    timestamp: ts,
+                                };
+                                self_addr_clone.send(update)
+                            })
+                            .map_err(|e| error!("Can't update asset pair timestamp."));
+
+                        Arbiter::spawn(ts_fut);
+                    });
+                Ok(())
+            });
+
+        Arbiter::spawn(update_future);
+
+        debug!("Kraken Trade History filter started.");
     }
 
     fn stopped(&mut self, ctx: &mut Context<Self>) {
@@ -101,6 +143,8 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
     fn handle(&mut self, msg: ToFilterTradeHistory, ctx: &mut Self::Context) {
         let asset_pair = msg.asset_pair;
 
+        let ts = *self.timestamp_marker.get(&asset_pair).unwrap_or(&YR2000);
+        
         /*
         // Add fetching of timestamp marker from storer here.
         let ts = match self.timestamp_marker.get(&asset_pair) {
@@ -162,5 +206,13 @@ impl Handler<ToFilterTradeHistory> for KrakenTradeHistory {
 
             Arbiter::spawn(send_future);
         }
+    }
+}
+
+impl Handler<UpdateTimestampMarker> for KrakenTradeHistory {
+    type Result = ();
+
+    fn handle(&mut self, msg: UpdateTimestampMarker, ctx: &mut Self::Context) {
+        self.timestamp_marker.insert(msg.asset_pair, msg.timestamp);
     }
 }
