@@ -5,7 +5,7 @@ use num_traits::ToPrimitive;
 use rust_decimal::Decimal;
 use chrono::{NaiveDateTime, DateTime, Utc};
 
-use common::trade;
+use common::{trade, asset};
 
 use model::{TradeHistory, TradeMatchItem};
 
@@ -17,8 +17,11 @@ lazy_static! {
 /// done for transmission.
 pub fn trade_history(
     history: &TradeHistory
-) -> Result<Vec<trade::TradeHistoryItem>, String> {
+) -> Result<(asset::Pair, Vec<trade::TradeHistoryItem>), String> {
     let mut output: Vec<trade::TradeHistoryItem> = Vec::new();
+
+    // Get the asset pair. All the items are of the same asset pair
+    let asset_pair = history.pair();
     
     for trade_match in history.items().iter() {
         // Each trade_match is a vector of six elements.
@@ -93,7 +96,7 @@ pub fn trade_history(
         ));
     }
 
-    Ok(output)
+    Ok((asset_pair, output))
 }
 
 #[cfg(test)]

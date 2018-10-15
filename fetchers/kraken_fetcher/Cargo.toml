@@ -26,3 +26,4 @@ chrono = "0.4.6"
 
 # Internal sammy project crates
 common = { path = "../../common" }
+fetch_lib = { path = "../fetch_lib" }

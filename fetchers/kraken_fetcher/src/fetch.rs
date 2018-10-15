@@ -127,7 +127,7 @@ pub fn filter_benign_errors(
 /// other systems, likely the translator.
 pub fn convert_into_common(
     input: impl Stream<Item = TradeHistory, Error = ()>
-) -> impl Stream<Item = Vec<trade::TradeHistoryItem>, Error = ()> {
+) -> impl Stream<Item = (asset::Pair, Vec<trade::TradeHistoryItem>), Error = ()> {
     input.and_then(|history| {
         trade_history(&history).map_err(|e| {
             error!("Failure to convert into common format: {}", &e);
