@@ -18,14 +18,12 @@ extern crate fetch_lib;
 
 pub mod https_client;
 pub mod fetch;
-pub mod place;
 pub mod targets;
 mod conversion;
 mod model;
 
 pub use self::https_client::{HttpsClient, FetchError};
 pub use self::targets::KrakenFetchTargets;
-//pub use self::place::put_trade_history;
 pub use self::fetch::{
     poll_trade_history,
     filter_benign_errors,
