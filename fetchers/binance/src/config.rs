@@ -13,7 +13,7 @@ static TRADE_HISTORY: &str = "TRADE_HISTORY_STREAMS";
 #[derive(Debug, Clone)]
 pub struct Configuration {
     collector: String,
-    subscribe: StreamRequest,
+    subscribe: StreamRequest,    
 }
 
 impl Configuration {

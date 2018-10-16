@@ -1,6 +1,20 @@
 //! Payloads from binance.
 
 use rust_decimal::Decimal;
+use chrono::{DateTime, Utc, NaiveDateTime};
+
+use common::{asset, trade};
+
+fn millisecond_timestamp_to_chrono(mts: u64) -> Option<DateTime<Utc>> {
+    if mts > 0 {
+        let seconds = (mts / 1000) as i64;
+        let millis = mts % 1000;
+        let nanos = (millis * 1000000) as u32;
+        Some(DateTime::from_utc(NaiveDateTime::from_timestamp(seconds, nanos), Utc))
+    } else {
+        None
+    }
+}
 
 /// Universal enum for all Binance websocket payloads. Payloads are internally tagged so
 /// representing with an enum is straightforward.
@@ -32,10 +46,61 @@ pub enum Payload {
     }
 }
 
+impl Payload {
+    pub fn asset_pair(&self) -> Result<asset::Pair, asset::ParseAssetError> {
+        match self {
+            Payload::Trade { symbol, .. } => symbol.parse(),
+        }
+    }
+
+    /// Creates a version of self that is a `TradeHistoryItem`. If self is of the wrong
+    /// enum type, returns `None`.
+    pub fn as_trade_history_item(&self) -> Option<trade::TradeHistoryItem> {
+        match self {
+            Payload::Trade {
+                event_time,
+                symbol,
+                trade_id,
+                price,
+                quantity,
+                buyer_order_id,
+                seller_order_id,
+                trade_time,
+                market_buyer,
+                ignore,
+            } => {
+                None                    
+                /*
+                trade::TradeHistoryItem::new(
+                    millisecond_timestamp_to_chrono(event_time).expect("Invalid timestamp"),
+                    quantity,
+                    price,
+                    if market_buyer {
+                        trade::Market::Taker,
+                    } else {
+                        trade::Market::Maker,
+                    },
+                 */  
+            },
+            //_ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StreamItem {
     stream: String,
     data: Payload,
+}
+
+impl StreamItem {
+    //pub fn stream(&self) -> &str {
+    //    self.stream.as_str()
+    //}
+
+    pub fn data(&self) -> &Payload {
+        &self.data
+    }
 }
 
 #[cfg(test)]

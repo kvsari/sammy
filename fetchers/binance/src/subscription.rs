@@ -11,6 +11,16 @@ enum StreamType {
     TradeHistoryItems(asset::Pair),
 }
 
+/*
+impl StreamType {
+    pub fn asset_pair(&self) -> asset::Pair {
+        match self {
+            StreamType::TradeHistoryItems(ap) => *ap,
+        }
+    }
+}
+*/
+
 impl fmt::Display for StreamType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -69,6 +79,18 @@ impl StreamRequest {
             });
 
         format!("{}{}", &self.base, &streams)
+    }
+
+    /// Asset pairs to fetch for trade history streams.
+    pub fn trade_history_asset_pairs(&self) -> Vec<asset::Pair> {
+        self.streams
+            .clone()
+            .into_iter()
+            .filter_map(|st| match st {
+                StreamType::TradeHistoryItems(ap) => Some(ap),
+                // _ => None,
+            })
+            .collect()
     }
 }
 

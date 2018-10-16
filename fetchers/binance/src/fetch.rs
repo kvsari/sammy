@@ -6,8 +6,11 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use futures::sync::mpsc::UnboundedSender;
 use serde_json;
 use ws::{self, Sender, Handler, Message, Handshake, util::Token, CloseCode};
+
+use common::{asset, trade};
 
 use super::StreamRequest;
 use payload;
@@ -21,12 +24,19 @@ struct Client {
 
     /// To permit graceful shutdown (and trapping ctlr-c plus other signals).
     stop: Arc<AtomicBool>,
+
+    /// Forward received items on.
+    th_sender: UnboundedSender<(asset::Pair, trade::TradeHistoryItem)>,
 }
 
 impl Client {
-    fn new(ws: Sender, stop: Arc<AtomicBool>) -> Self {
+    fn new(
+        ws: Sender,
+        stop: Arc<AtomicBool>,
+        th_sender: UnboundedSender<(asset::Pair, trade::TradeHistoryItem)>,
+    ) -> Self {
         Client {
-            ws, stop,
+            ws, stop, th_sender,
         }
     }
 }
@@ -55,15 +65,37 @@ impl Handler for Client {
         }
     }
 
+    /// Inspects each message and depending on the type, will forward it on through the
+    /// appropriate `UnboundedSender` channel.
     fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
         let json = msg.as_text()?;
         match serde_json::from_str::<payload::StreamItem>(json) {
-            Ok(payload) => {
-                println!("Received payload: {:?}", &payload);
+            Ok(stream_item) => {
+                trace!("Received stream item: {:?}", &stream_item);
+                match stream_item.data().asset_pair() {
+                    Ok(ap) => {
+                        // Check if the payload is a trade history item.
+                        if let Some(thi) = stream_item.data().as_trade_history_item() {
+                            self.th_sender
+                                .unbounded_send((ap, thi))
+                                .unwrap_or_else(|_| {
+                                    self.stop.store(true, Ordering::Relaxed)
+                                });
+                        }
+                    },
+                    Err(e) => {
+                        error!("Invalid asset pair symbol: {}", &e);
+                        // TODO: Do something with this error. Currently will ignore and
+                        //       keep going with the next item. Maybie should keep an error
+                        //       count in here and notify an external system?
+                    },
+                }
             },
             Err(e) => {
                 error!("Payload deserialization failed: {}", &e);
-                // TODO: Do Something with the error.
+                // TODO: Do Something with the error. If this starts happening consecutively
+                //       for example it could indicate an API change. Thus some form of
+                //       notification is essential for these kinds of errors.
             },
         }
         Ok(())
@@ -73,10 +105,16 @@ impl Handler for Client {
 
 
 /// Starts websocket connection within reconnect loop. Blocks calling thread.
-pub fn stream(subscription: StreamRequest, stop: Arc<AtomicBool>
-) -> Result<(), String> {
+pub fn stream(
+    subscription: StreamRequest,
+    stop: Arc<AtomicBool>,
+    th_sender: UnboundedSender<(asset::Pair, trade::TradeHistoryItem)>,
+) {
     while !stop.load(Ordering::Relaxed) {
-        match ws::connect(subscription.url(), |sender| Client::new(sender, stop.clone())) {
+        let url = subscription.url();
+        match ws::connect(
+            url, |sender| Client::new(sender, stop.clone(), th_sender.clone())
+        ) {
             Ok(()) => (), // Stopped normally.
             Err(e) => {
                 error!("Encountered error: {}", &e);
@@ -85,6 +123,4 @@ pub fn stream(subscription: StreamRequest, stop: Arc<AtomicBool>
             },
         }
     }
-
-    Ok(())
 }
