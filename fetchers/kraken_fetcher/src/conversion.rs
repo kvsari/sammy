@@ -10,7 +10,11 @@ use common::{trade, asset};
 use model::{TradeHistory, TradeMatchItem};
 
 lazy_static! {
-    static ref NANOS_MUL: Decimal =  100_000_u64.into();
+    /// Warning: This value here is a bug. Keeping it until tested that the commented out
+    ///          value below is the correct multiplication amount. Then I need to setup
+    ///          an SQL script to correct the bad timestamps in the database.
+    static ref NANOS_MUL: Decimal =  1_000_000_000_u64.into();
+    //static ref NANOS_MUL: Decimal =  100_000_u64.into();
 }
 
 /// Convert the internal kraken trade match history model into the common model. This is
