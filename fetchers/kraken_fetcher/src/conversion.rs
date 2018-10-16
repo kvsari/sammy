@@ -10,7 +10,7 @@ use common::{trade, asset};
 use model::{TradeHistory, TradeMatchItem};
 
 lazy_static! {
-    static ref NANOS_MUL: Decimal =  1_000_000_000_u64.into();
+    static ref NANOS_MUL: Decimal =  100_000_u64.into();
 }
 
 /// Convert the internal kraken trade match history model into the common model. This is
