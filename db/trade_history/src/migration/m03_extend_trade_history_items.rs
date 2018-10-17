@@ -11,6 +11,7 @@ impl PostgresMigration for ExtendTradeHistoryItems {
     fn up(&self, transaction: &Transaction) -> Result<(), PostgresError> {
         transaction.batch_execute(
             "ALTER TABLE IF EXISTS trade_history_items \
+             ALTER COLUMN trade DROP NOT NULL, \
              ADD COLUMN IF NOT EXISTS match_id BIGINT DEFAULT NULL, \
              ADD COLUMN IF NOT EXISTS buy_order_id BIGINT DEFAULT NULL, \
              ADD COLUMN IF NOT EXISTS sell_order_id BIGINT DEFAULT NULL, \
@@ -21,6 +22,7 @@ impl PostgresMigration for ExtendTradeHistoryItems {
     fn down(&self, transaction: &Transaction) -> Result<(), PostgresError> {
         transaction.batch_execute(
             "ALTER TABLE IF EXISTS trade_history_items \
+             ALTER COLUMN trade SET NOT NULL, \
              DROP COLUMN IF EXISTS match_id CASCADE, \
              DROP COLUMN IF EXISTS buy_order_id CASCADE, \
              DROP COLUMN IF EXISTS sell_order_id CASCADE, \

@@ -13,8 +13,8 @@ pub struct FreshTradeItem {
     size: Decimal,
     price: Decimal,
     market: trade::Market,
-    trade: trade::Type,
-
+    
+    trade: Option<trade::Type>,
     match_id: Option<i64>,
     buy_order_id: Option<i64>,
     sell_order_id: Option<i64>,
@@ -29,7 +29,8 @@ impl FreshTradeItem {
         size: Decimal,
         price: Decimal,
         market: trade::Market,
-        trade: trade::Type,
+        
+        trade: Option<trade::Type>,
         match_id: Option<i64>,
         buy_order_id: Option<i64>,
         sell_order_id: Option<i64>,
@@ -60,7 +61,7 @@ pub struct TradeItem {
     size: Decimal,
     price: Decimal,
     market: trade::Market,
-    trade: trade::Type,
+    //trade: trade::Type,
 }
 
 impl TradeItem {
@@ -72,10 +73,10 @@ impl TradeItem {
         size: Decimal,
         price: Decimal,
         market: trade::Market,
-        trade: trade::Type,
+        //trade: trade::Type,
     ) -> Self {
         TradeItem {
-            id, exchange, asset_pair, timestamp, size, price, market, trade
+            id, exchange, asset_pair, timestamp, size, price, market, //trade
         }
     }
 }

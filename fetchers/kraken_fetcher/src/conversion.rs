@@ -96,7 +96,7 @@ pub fn trade_history(
         // Build the TradeHistoryItem and add it to our output. The last four `None`s are
         // for optional data that is not provided by kraken.
         output.push(trade::TradeHistoryItem::new(
-            ts, size, price, side, trade, None, None, None, None
+            ts, size, price, side, Some(trade), None, None, None, None
         ));
     }
 

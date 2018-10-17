@@ -47,7 +47,7 @@ macro_rules! db_row_to_trade_item {
             $row.get(4),
             $row.get(5),
             *$ids_tm.get(&$row.get(6)).ok_or("Market in DB not in index.")?,
-            *$ids_tt.get(&$row.get(7)).ok_or("Trade type in DB not in index.")?,
+            //*$ids_tt.get(&$row.get(7)).ok_or("Trade type in DB not in index.")?,
         )
     }
 }
@@ -129,7 +129,11 @@ impl Trades {
                 let ex_id = self.ex_ids.get(fti.exchange()).ok_or("Invalid exchange")?;
                 let ap_id = self.ap_ids.get(fti.asset_pair()).ok_or("Invalid asset pair")?;
                 let tm_id = self.tm_ids.get(fti.market()).ok_or("Invalid market")?;
-                let tt_id = self.tt_ids.get(fti.trade()).ok_or("Invalid trade")?;
+                let tt_id = if let Some(trade) = fti.trade() {
+                    Some(self.tt_ids.get(&trade).ok_or("Invalid trade")?)
+                } else {
+                    None
+                };
                 
                 let rows = create_stmt.query(&[
                     ex_id,
@@ -138,7 +142,7 @@ impl Trades {
                     fti.size(),
                     fti.price(),
                     tm_id,
-                    tt_id,
+                    &tt_id,
                     fti.match_id(),
                     fti.buy_order_id(),
                     fti.sell_order_id(),

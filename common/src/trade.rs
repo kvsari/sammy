@@ -89,9 +89,11 @@ pub struct TradeHistoryItem {
     size: Decimal,
     price: Decimal,
     market: Market,
-    trade: Type,
 
-    //meta: String,
+    /// If the trade has a trade type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    trade: Option<Type>,
+    //trade: Type,
 
     /// If the trade match has an ID
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -116,7 +118,7 @@ impl TradeHistoryItem {
         size: Decimal,
         price: Decimal,
         market: Market,
-        trade: Type,
+        trade: Option<Type>,
         match_id: Option<i64>,
         buy_order_id: Option<i64>,
         sell_order_id: Option<i64>,
@@ -151,7 +153,7 @@ impl TradeHistoryItem {
         self.market
     }
 
-    pub fn trade(&self) -> Type {
+    pub fn trade(&self) -> Option<Type> {
         self.trade
     }
 
