@@ -26,7 +26,6 @@ fn main() {
     let configuration = config::config_from_environment().expect("Can't load config.");
     debug!("Configuration: {:?}", &configuration);
 
-    //let request = configuration.subscribe();
     let target = fetch_lib::place::Target::new(
         configuration.collector(), 
         common::exchange::Exchange::Binance,

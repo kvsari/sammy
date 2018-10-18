@@ -59,7 +59,7 @@ impl Payload {
         match self {
             Payload::Trade {
                 event_time,
-                symbol,
+                symbol: _,
                 trade_id,
                 price,
                 quantity,
@@ -67,21 +67,25 @@ impl Payload {
                 seller_order_id,
                 trade_time,
                 market_buyer,
-                ignore,
-            } => {
-                None                    
-                /*
-                trade::TradeHistoryItem::new(
-                    millisecond_timestamp_to_chrono(event_time).expect("Invalid timestamp"),
-                    quantity,
-                    price,
-                    if market_buyer {
-                        trade::Market::Taker,
-                    } else {
-                        trade::Market::Maker,
-                    },
-                 */  
-            },
+                ignore: _,
+            } => Some(trade::TradeHistoryItem::new(
+                millisecond_timestamp_to_chrono(*event_time).expect("Invalid timestamp"),
+                *quantity,
+                *price,
+                if *market_buyer {
+                    trade::Market::Taker
+                } else {
+                    trade::Market::Maker
+                },
+                None,
+                Some(*trade_id as i64),
+                Some(*buyer_order_id as i64),
+                Some(*seller_order_id as i64),
+                Some(
+                    millisecond_timestamp_to_chrono(*trade_time)
+                        .expect("Invalid trade execution timestamp.")
+                )),
+            ),
             //_ => None,
         }
     }
