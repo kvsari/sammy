@@ -9,6 +9,7 @@ extern crate collector_lib as lib;
 
 use actix::Actor;
 use actix_web::{server::HttpServer, App, http::Method};
+use actix_web::middleware::Logger;
 
 use lib::{restful, filter, database};
 
@@ -35,6 +36,7 @@ fn main() {
 
     HttpServer::new(move || {
         App::with_state(rest_state.clone())
+            .middleware(Logger::default())
             .scope("/trade_history", |scope| {
                 scope
                     .resource("", |r| {

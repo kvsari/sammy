@@ -5,6 +5,21 @@ use chrono::{DateTime, Utc, NaiveDateTime};
 
 use common::{asset, trade};
 
+/// Similar to the `asset_amend` function in the subscription module. Will test the symbol
+/// string for particular matches where Binance has a different code from what exists in
+/// the `common` library which is based on the standard code used everywhere.
+///
+/// TODO: When the time comes to refactor... or to add more asset pairs, consider using
+///       the [regex](https://crates.io/crates/regex) crate instead of a huge match.
+fn asset_pair_parse(symbol: &str) -> Result<asset::Pair, asset::ParseAssetError> {
+    match symbol {
+        "bnbusdt" | "BNBUSDT" => Ok(asset::BNB_USD),
+        "ethusdt" | "ETHUSDT" => Ok(asset::ETH_USD),
+        "btcusdt" | "BTCUSDT" => Ok(asset::BTC_USD),
+        _ => symbol.parse(),
+    }
+}
+
 fn millisecond_timestamp_to_chrono(mts: u64) -> Option<DateTime<Utc>> {
     if mts > 0 {
         let seconds = (mts / 1000) as i64;
@@ -49,7 +64,7 @@ pub enum Payload {
 impl Payload {
     pub fn asset_pair(&self) -> Result<asset::Pair, asset::ParseAssetError> {
         match self {
-            Payload::Trade { symbol, .. } => symbol.parse(),
+            Payload::Trade { symbol, .. } => asset_pair_parse(symbol),
         }
     }
 

@@ -6,6 +6,15 @@ use common::asset;
 
 const DEFAULT_BINANCE_WEBSOCKET_BASE_URI: &str = "wss://stream.binance.com:9443";
 
+/// Some assets have a different code on Binance. For example, USD is USDT. Thus, make
+/// local amendments to some of these 
+fn asset_amend(aa: asset::Asset) -> String {
+    match aa {
+        asset::Asset::USD => "usdt".into(),
+        _ => aa.as_str().to_lowercase(),
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 enum StreamType {
     TradeHistoryItems(asset::Pair),
@@ -25,8 +34,8 @@ impl fmt::Display for StreamType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             StreamType::TradeHistoryItems(pair) => {
-                let l = pair.left().as_str().to_lowercase();
-                let r = pair.right().as_str().to_lowercase();                
+                let l = asset_amend(pair.left());
+                let r = asset_amend(pair.right());
                 write!(f, "{}{}@trade", &l, &r)
             },
         }
