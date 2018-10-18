@@ -52,6 +52,15 @@ impl Target {
 /// Placement stream yields, the items input that have been successfully placed. Otherwise
 /// yields an error.
 ///
+/// # Retries
+/// Placement failures will be retried three times with a delay of five seconds between
+/// each attempt. The retries are there to deal with minor transmission failures that
+/// sometimes happen as is not a full featured guaranteed deliver system. If all retry
+/// attempts fail, the data is dropped.
+/// 
+/// ## TODO
+/// 1. Make the retries and delay configurable.
+///
 /// ## Note
 /// The returned future must be run/spawned within a `tokio` runtime. That is because this
 /// future may spawn additional futures using `tokio`.
