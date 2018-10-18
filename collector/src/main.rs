@@ -5,9 +5,10 @@ extern crate dotenv;
 extern crate actix;
 extern crate actix_web;
 
+extern crate common;
 extern crate collector_lib as lib;
 
-use actix::Actor;
+use actix::{Actor, SyncArbiter};
 use actix_web::{server::HttpServer, App, http::Method};
 use actix_web::middleware::Logger;
 
@@ -23,8 +24,15 @@ fn main() {
 
     let system = actix::System::new("Translator");
 
+    /*
     let storer = database::TradeHistoryStorer::new(config.database_url());
     let storer_addr = storer.start();
+     */
+
+    let db_url = config.database_url().to_owned();
+    let storer_addr = SyncArbiter::start(config.database_connections() as usize, move || {
+        database::TradeHistoryStorer::new(db_url.as_str())
+    });
 
     let kraken_filter = filter::KrakenTradeHistory::new(storer_addr.clone());
     let kf_addr = kraken_filter.start();

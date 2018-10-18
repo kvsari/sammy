@@ -37,7 +37,7 @@ impl TradeHistoryStorer {
 }
 
 impl Actor for TradeHistoryStorer {
-    type Context = Context<Self>;
+    type Context = SyncContext<Self>;
 
     fn started(&mut self, _ctx: &mut Self::Context) {
         debug!("Trade history storer started.");
