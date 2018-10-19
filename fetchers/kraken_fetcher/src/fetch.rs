@@ -59,7 +59,6 @@ pub fn poll_trade_history(
         .from_err::<FetchError>()
         .and_then(|body| {
             let history: Outer<TradeHistory> = serde_json::from_slice(&body)?;
-            println!("{:?}", &history);
             Ok(history)
         })
 }

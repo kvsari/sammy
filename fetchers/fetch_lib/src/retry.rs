@@ -83,6 +83,8 @@ impl Future for PutRetry {
                 &self.count - 1,
                 &self.limit,
             );
+            return Err(());
+            
             // TODO: Pass the error onto another system? It could be that the collector
             //       is down and can't be restarted so a notification to sysadmin needed.
         }
