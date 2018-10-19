@@ -14,7 +14,6 @@ lazy_static! {
     ///          value below is the correct multiplication amount. Then I need to setup
     ///          an SQL script to correct the bad timestamps in the database.
     static ref NANOS_MUL: Decimal =  1_000_000_000_u64.into();
-    //static ref NANOS_MUL: Decimal =  100_000_u64.into();
 }
 
 /// Convert the internal kraken trade match history model into the common model. This is
@@ -106,8 +105,6 @@ pub fn trade_history(
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    
-    use serde_json;    
 
     use model::Items;
     use super::*;
@@ -138,18 +135,46 @@ mod tests {
         
         assert!(result.is_ok());
 
-        let trade_history = result.unwrap();
+        let trade_history = result.unwrap().1;
 
         assert!(trade_history.len() == 2);
         
         assert!(trade_history[0].size() == 1.into());
         assert!(trade_history[0].price() == 10.into());
         assert!(trade_history[0].market() == trade::Market::Taker);
-        assert!(trade_history[0].trade() == trade::Type::Market);
+        assert!(trade_history[0].trade() == Some(trade::Type::Market));
 
         assert!(trade_history[1].size() == 2.into());
         assert!(trade_history[1].price() == 20.into());
         assert!(trade_history[1].market() == trade::Market::Maker);
-        assert!(trade_history[1].trade() == trade::Type::Limit);
+        assert!(trade_history[1].trade() == Some(trade::Type::Limit));
+    }
+
+    #[test]
+    fn timestamp_conversion() {
+        let items = vec![
+            vec![
+                TradeMatchItem::Text("10".to_owned()),
+                TradeMatchItem::Text("1".to_owned()),
+                TradeMatchItem::Timestamp(Decimal::from_str("1539957355.3009").unwrap()),
+                TradeMatchItem::Text("b".to_owned()),
+                TradeMatchItem::Text("m".to_owned()),
+                TradeMatchItem::Text(String::new()),
+            ],
+            vec![
+                TradeMatchItem::Text("20".to_owned()),
+                TradeMatchItem::Text("2".to_owned()),
+                TradeMatchItem::Timestamp(Decimal::from_str("1539956448.421").unwrap()),
+                TradeMatchItem::Text("s".to_owned()),
+                TradeMatchItem::Text("l".to_owned()),
+                TradeMatchItem::Text(String::new()),
+            ],
+        ];
+
+        let th = TradeHistory::new(Items::XXBTZUSD(items), "123456".to_owned());
+        let thi1 = trade_history(&th).unwrap().1[0];
+        let thi2 = trade_history(&th).unwrap().1[1];
+        assert_eq!(thi1.timestamp().to_rfc3339(), "2018-10-19T13:55:55.300900+00:00");
+        assert_eq!(thi2.timestamp().to_rfc3339(), "2018-10-19T13:40:48.421+00:00");
     }
 }

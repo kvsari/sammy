@@ -26,7 +26,8 @@ pub fn setup<'a>(
 
     let mut migrator = Migrator::new(adapter);
 
-    // Load in all the migrations. Any new migrations must be added in here.
+    // Load in all the migrations. Any new migrations must be added in here and the
+    // deployment date must be set in the source code.
     migrator.register(Box::new(m01_initial::CreateInitial));
     migrator.register(Box::new(m02_add_binance::MakeAdditions));
     migrator.register(Box::new(m03_extend_trade_history_items::ExtendTradeHistoryItems));

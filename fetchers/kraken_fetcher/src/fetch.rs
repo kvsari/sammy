@@ -58,9 +58,8 @@ pub fn poll_trade_history(
         })
         .from_err::<FetchError>()
         .and_then(|body| {
-            //let body = String::from_utf8(body.to_vec())?;
-            //Ok(body)
             let history: Outer<TradeHistory> = serde_json::from_slice(&body)?;
+            println!("{:?}", &history);
             Ok(history)
         })
 }

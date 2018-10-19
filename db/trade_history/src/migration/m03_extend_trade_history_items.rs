@@ -1,4 +1,9 @@
 //! Extend the `trade_history_items` database table to store extra binance data.
+//!
+//! ## Warning
+//! This migration contains a one-way column change to allow null values. This is the
+//! `trade` column. This the deployment cannot be reversed to a prior version of the
+//! source code if there's a screwup.
 use postgres::error::Error as PostgresError;
 use postgres::transaction::Transaction;
 use schemamama_postgres::PostgresMigration;
@@ -18,11 +23,10 @@ impl PostgresMigration for ExtendTradeHistoryItems {
              ADD COLUMN IF NOT EXISTS match_ts TIMESTAMP WITH TIME ZONE DEFAULT NULL;"
         )
     }
-
+    
     fn down(&self, transaction: &Transaction) -> Result<(), PostgresError> {
         transaction.batch_execute(
             "ALTER TABLE IF EXISTS trade_history_items \
-             ALTER COLUMN trade SET NOT NULL, \
              DROP COLUMN IF EXISTS match_id CASCADE, \
              DROP COLUMN IF EXISTS buy_order_id CASCADE, \
              DROP COLUMN IF EXISTS sell_order_id CASCADE, \
