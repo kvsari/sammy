@@ -1,6 +1,6 @@
 # We use the rust image as the base
 # https://hub.docker.com/r/_/rust/
-FROM rust:1.29.1
+FROM rust:1.29.2
 
 WORKDIR /usr/src/sammy
 

@@ -1,6 +1,6 @@
 # We use the rust image as the base
 # https://hub.docker.com/r/_/rust/
-FROM rust:1.29.1
+FROM rust:1.29.2
 
 WORKDIR /usr/src/sammy
 
@@ -11,7 +11,7 @@ RUN cd db/trade_history && \
 		cargo install --path . && \
 		cargo clean
 
-ENV RUST_LOG "trade_history_migrate=info"
+ENV RUST_LOG "migrator=info"
 ENV RUST_BACKTRACE 1
 
-CMD ["/usr/local/cargo/bin/trade_history_migrate"]
+CMD ["/usr/local/cargo/bin/migrator"]
