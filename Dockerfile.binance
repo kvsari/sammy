@@ -6,12 +6,12 @@ WORKDIR /usr/src/sammy
 
 COPY . .
 
-RUN cd fetchers/kraken_fetcher && \
+RUN cd fetchers/binance && \
        cargo build --release && \
        cargo install --path . && \
        cargo clean
 
-ENV RUST_LOG "kraken_fetcher=info"
+ENV RUST_LOG "binance=info"
 ENV RUST_BACKTRACE 1
 
-ENTRYPOINT ["kraken_fetcher"]
+ENTRYPOINT ["binance"]
