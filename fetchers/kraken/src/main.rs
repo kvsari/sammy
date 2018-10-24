@@ -8,7 +8,7 @@ extern crate dotenv;
 
 extern crate common;
 
-extern crate kraken_fetcher_lib as lib;
+extern crate kraken_lib as lib;
 extern crate fetch_lib;
 
 use futures::future::{Either, lazy, result, FutureResult};

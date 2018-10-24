@@ -1,10 +1,10 @@
 [package]
-name = "kraken_fetcher"
+name = "kraken"
 version = "0.1.2"
 authors = ["Stephan Luther <kvsari@gmail.com>"]
 
 [lib]
-name = "kraken_fetcher_lib"
+name = "kraken_lib"
 path = "src/lib.rs"
 
 [dependencies]
