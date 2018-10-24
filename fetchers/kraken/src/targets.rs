@@ -15,6 +15,8 @@ impl KrakenFetchTargets {
         let base = "https://api.kraken.com/0/public/Trades";
         let pair = match ap {
             asset::BTC_USD => "?pair=XBTUSD",
+            asset::ETH_USD => "?pair=ETHUSD",
+            asset::ETH_BTC => "?pair=ETHXBT",
             _ => return None,
         };
 

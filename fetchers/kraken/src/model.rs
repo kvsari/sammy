@@ -19,6 +19,7 @@ pub enum TradeMatchItem {
 pub enum Items {
     XXBTZUSD(Vec<Vec<TradeMatchItem>>),
     XETHZUSD(Vec<Vec<TradeMatchItem>>),
+    XETHXXBT(Vec<Vec<TradeMatchItem>>),
 }
 
 impl Items {
@@ -26,6 +27,7 @@ impl Items {
         match self {
             Items::XETHZUSD(_) => asset::ETH_USD,
             Items::XXBTZUSD(_) => asset::BTC_USD,
+            Items::XETHXXBT(_) => asset::ETH_BTC,
         }
     }
 
@@ -33,6 +35,7 @@ impl Items {
         match self {
             Items::XETHZUSD(ref items) => items,
             Items::XXBTZUSD(ref items) => items,
+            Items::XETHXXBT(ref items) => items,
         }
     }
 }

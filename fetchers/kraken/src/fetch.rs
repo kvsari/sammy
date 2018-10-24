@@ -5,10 +5,10 @@ use futures::Stream;
 use serde_json;
 use tokio_timer;
 
+use fetch_lib::https_client::{HttpsClient, FetchError};
 use common::{asset, trade};
 
 use super::KrakenFetchTargets;
-use super::{HttpsClient, FetchError};
 use model::{Outer, TradeHistory};
 use conversion::trade_history;
 
@@ -19,9 +19,10 @@ pub fn poll_trade_history(
     client: HttpsClient,
     pair: asset::Pair,
     targets: KrakenFetchTargets,
+    poll_delay: Duration,
 ) -> impl Stream<Item = Outer<TradeHistory>, Error = FetchError> {
-    // Start the interval loop at polling per 15 seconds.
-    let frequency = tokio_timer::Interval::new_interval(Duration::from_secs(15));
+    // Start the interval loop
+    let frequency = tokio_timer::Interval::new_interval(poll_delay);
 
     // Setup the since var.
     // TODO: Make mutable. We may need to track last fetch if we are fetching many

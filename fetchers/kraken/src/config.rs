@@ -4,7 +4,7 @@ use std::{env, error, fmt, convert, str};
 use common::asset;
 
 static TRANSLATOR: &str = "SAMMY_TRANSLATOR";
-static ASSET_PAIR: &str = "KRAKEN_ASSET_PAIR";
+static ASSET_PAIRS: &str = "KRAKEN_ASSET_PAIRS";
 static MODE: &str = "KRAKEN_FETCH_MODE";
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -27,14 +27,14 @@ impl str::FromStr for FetchMode {
 
 #[derive(Debug, Clone)]
 pub struct Configuration {
-    asset_pair: asset::Pair,
+    asset_pairs: Vec<asset::Pair>,
     fetch_mode: FetchMode,
     translator: String,
 }
 
 impl Configuration {
-    pub fn asset_pair(&self) -> asset::Pair {
-        self.asset_pair
+    pub fn asset_pairs(&self) -> Vec<asset::Pair> {
+        self.asset_pairs.clone()
     }
 
     pub fn fetch_mode(&self) -> FetchMode {
@@ -47,12 +47,18 @@ impl Configuration {
 }
 
 pub fn config_from_environment() -> Result<Configuration, ConfigError> {
-    let asset_pair = env::var(ASSET_PAIR).map_err(|e| (ASSET_PAIR, e))?;
+    let asset_pairs = env::var(ASSET_PAIRS).map_err(|e| (ASSET_PAIRS, e))?;
     let fetch_mode = env::var(MODE).map_err(|e| (MODE, e))?;
     let translator = env::var(TRANSLATOR).map_err(|e| (TRANSLATOR, e))?;
 
+    let asset_pairs: Vec<asset::Pair> = asset_pairs
+        .split(':')
+        .map(|ap_str| ap_str.parse().expect("Invalid asset pair code."))
+        .collect();
+
+
     Ok(Configuration {
-        asset_pair: asset_pair.parse().map_err(|e| (ASSET_PAIR, e))?,
+        asset_pairs: asset_pairs,
         fetch_mode: fetch_mode.parse()?,
         translator: translator,
     })
