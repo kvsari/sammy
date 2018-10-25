@@ -1,9 +1,12 @@
 //! Fetching code
 use std::time::Duration;
 
-use futures::Stream;
+use futures::{Future, Stream};
+use futures::sync::mpsc;
+use futures::future::{lazy, result, FutureResult};
 use serde_json;
 use tokio_timer;
+use tokio;
 
 use fetch_lib::https_client::{HttpsClient, FetchError};
 use common::{asset, trade};
@@ -64,6 +67,49 @@ pub fn poll_trade_history(
         })
 }
 
+/// Spawn multiple fetchers, one for each asset pair. Combine their outputs using a channel
+/// and return the entire thing packaged into a stream.
+///
+/// ## Todo
+/// 1. Try re-writing this function to use `select` instead of a channel to combine the
+///    fetch streams together. This aught to remove the risk of a `SendError`.
+pub fn poll_trade_histories(
+    client: HttpsClient,
+    pairs: Vec<asset::Pair>,
+    targets: KrakenFetchTargets,
+    poll_delay: Duration,
+) -> impl Stream<Item = Outer<TradeHistory>, Error = FetchError> {
+    let (tx, rx) = mpsc::unbounded();
+    
+    lazy(move || -> FutureResult<
+        Box<Stream<Item = Outer<TradeHistory>, Error = FetchError> + Send>, ()
+            > {
+        pairs.into_iter()
+            .for_each(move |pair| {
+                let sender = tx.clone();
+                let fut = poll_trade_history(
+                    client.clone(), pair, targets.clone(), poll_delay,
+                ).then(move |emission| {
+                    sender.unbounded_send(emission)
+                        .expect(
+                            "This should never happen. TODO: Refactor me to use select."
+                        );
+                    Ok(())
+                }).for_each(|()| Ok(()));
+                tokio::spawn(fut);
+            });        
+
+        let recv = rx
+            .map_err(|()| FetchError::InternalChannel)
+            .and_then(|emission| emission);
+
+        result::<_, _>(Ok(Box::new(recv)))
+        
+    })
+        .map_err(|()| FetchError::InternalChannel)
+        .flatten_stream()
+}
+
 /// Takes in the fetch stream and deals with all benign errors only propagating the stream
 /// killing errors that would need to be handled by an overarching process.
 pub fn filter_benign_errors(
@@ -93,6 +139,17 @@ pub fn filter_benign_errors(
                     FetchError::Utf8(e) => {
                         error!("Utf8: {}", &e);
                         // Possibly a transmission error. Perhaps we can continue.
+                        Ok(None)
+                    },
+                    FetchError::InternalChannel => {
+                        error!("Internal channel failure");
+                        // This error should never happen. Unbounded channels were being
+                        // used to combine the fetch streams into one and somehow they
+                        // failed. It shouldn't ever happen as the fetches occur based on
+                        // a timer and thus a failure to fetch should mean that it'll be
+                        // tried again on the next timeout. Going to return Ok(None) here
+                        // but it might make more sense to just error the stream, exit and
+                        // then rely on orchestration to restart the fetcher.
                         Ok(None)
                     },
                 },

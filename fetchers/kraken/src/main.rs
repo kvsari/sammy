@@ -36,12 +36,13 @@ fn main() {
     let future = match config.fetch_mode() {
         config::FetchMode::TradeHistory => {
             debug!("Trade history fetching chosen.");
-            let raw_fetch_stream = lib::poll_trade_history(
+            let raw_fetch_stream = lib::poll_trade_histories(
                 client.clone(),
-                fetch_aps[0],
+                fetch_aps,
                 lib::KrakenFetchTargets,
-                Duration::from_secs(15),
+                Duration::from_secs(60),
             );
+            
             let filtered_fetch_stream = lib::filter_benign_errors(raw_fetch_stream);
             let converted_stream = lib::convert_into_common(filtered_fetch_stream);
             let place_future = place::put_trade_history(
