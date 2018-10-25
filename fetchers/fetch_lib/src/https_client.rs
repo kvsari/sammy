@@ -18,6 +18,7 @@ pub enum FetchError {
     Status(u16),
     Utf8(string::FromUtf8Error),
     SerdeJson(serde_json::Error),
+    InternalChannel,
 }
 
 impl fmt::Display for FetchError {
@@ -27,6 +28,7 @@ impl fmt::Display for FetchError {
             FetchError::Status(err) => write!(f, "HTTP status code: {}", &err),
             FetchError::Utf8(err) => write!(f, "Response body invalid UTF8: {}", &err),
             FetchError::SerdeJson(err) => write!(f, "JSON serde error: {}", &err),
+            FetchError::InternalChannel => write!(f, "Internal channel failure"),
         }
     }
 }
@@ -42,6 +44,7 @@ impl error::Error for FetchError {
             FetchError::Status(_) => None,
             FetchError::Utf8(ref err) => Some(err),
             FetchError::SerdeJson(ref err) => Some(err),
+            FetchError::InternalChannel => None,
         }
     }
 }
