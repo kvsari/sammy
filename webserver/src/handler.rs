@@ -133,6 +133,11 @@ pub fn ticks_last_24h_10_min_spans(
         .responder()
 }
 
+pub fn ticks(_req: &HttpRequest<State>) -> impl Responder {
+    let blurb = r##"{"into":"ticks stub."}"##;
+    HttpResponse::Ok().body(blurb) 
+}
+
 #[derive(Debug)]
 enum FetchFoldError {
     Client(client::SendRequestError),

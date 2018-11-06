@@ -43,6 +43,12 @@ fn main() {
                         //r.method(Method::GET).f(handler::dummy_ticks_144)
                     })
             })
+            .scope("/trade_history", |scope| {
+                scope
+                    .resource("/ticks", |r| {
+                        r.method(Method::GET).f(handler::ticks)
+                    })
+            })            
             .scope("/", |scope| {
                 scope
                     .handler("", fs::StaticFiles::new("www").unwrap().show_files_listing())
