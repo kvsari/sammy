@@ -1,3 +1,4 @@
+#[macro_use] extern crate serde_derive;
 #[macro_use] extern crate log;
 extern crate dotenv;
 extern crate env_logger;
@@ -17,6 +18,7 @@ use actix_web::{server, App, fs, http::Method, middleware::Logger};
 mod config;
 mod handler;
 mod middle;
+mod model;
 
 fn main() {
     dotenv::dotenv().ok();
@@ -27,7 +29,7 @@ fn main() {
     
     let system = actix::System::new("sammy webserver");
 
-    let state = handler::State::new(configuration.folder_url());    
+    let state = handler::ServerState::new(configuration.folder_url());    
     
     server::HttpServer::new(move || {
         App::with_state(state.clone())
@@ -46,7 +48,7 @@ fn main() {
             .scope("/trade_history", |scope| {
                 scope
                     .resource("/ticks", |r| {
-                        r.method(Method::GET).f(handler::ticks)
+                        r.method(Method::GET).with(handler::ticks)
                     })
             })            
             .scope("/", |scope| {

@@ -16,25 +16,29 @@ use actix_web::{
     http::header,
     HttpMessage,
     ResponseError,
+    State,
+    Query,
 };
 use serde_json;
 
 use common::tick::Tick;
 
+use model::TicksRequest;
+
 #[derive(Debug, Clone)]
-pub struct State {
+pub struct ServerState {
     folder_url: String,
 }
 
-impl State {
+impl ServerState {
     pub fn new(folder_url: &str) -> Self {
-        State {
+        ServerState {
             folder_url: folder_url.to_owned(),
         }
     }
 }
 
-pub fn info(_req: &HttpRequest<State>) -> impl Responder {
+pub fn info(_req: &HttpRequest<ServerState>) -> impl Responder {
     let blurb = r##"{"into":"Emit ticks."}"##;
     HttpResponse::Ok().body(blurb)
 }
@@ -52,7 +56,7 @@ pub fn dummy_ticks_144(_req: &HttpRequest<State>) -> impl Responder {
 */
 
 pub fn ticks_last_24h_10_min_spans(
-    req: &HttpRequest<State>,
+    req: &HttpRequest<ServerState>,
 ) -> Box<Future<Item = HttpResponse, Error = error::Error>> {
     let now: DateTime<Utc> = Utc::now();
     let mut minutes = 1440;
@@ -133,7 +137,7 @@ pub fn ticks_last_24h_10_min_spans(
         .responder()
 }
 
-pub fn ticks(_req: &HttpRequest<State>) -> impl Responder {
+pub fn ticks(state: State<ServerState>, query: Query<TicksRequest>) -> impl Responder {
     let blurb = r##"{"into":"ticks stub."}"##;
     HttpResponse::Ok().body(blurb) 
 }
