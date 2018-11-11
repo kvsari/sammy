@@ -1,3 +1,4 @@
+#[macro_use] extern crate derive_getters;
 #[macro_use] extern crate serde_derive;
 #[macro_use] extern crate log;
 extern crate dotenv;
@@ -19,6 +20,7 @@ mod config;
 mod handler;
 mod middle;
 mod model;
+mod function;
 
 fn main() {
     dotenv::dotenv().ok();

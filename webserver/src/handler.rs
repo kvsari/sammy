@@ -24,6 +24,7 @@ use serde_json;
 use common::tick::Tick;
 
 use model::TicksRequest;
+use function;
 
 #[derive(Debug, Clone)]
 pub struct ServerState {
@@ -138,8 +139,22 @@ pub fn ticks_last_24h_10_min_spans(
 }
 
 pub fn ticks(state: State<ServerState>, query: Query<TicksRequest>) -> impl Responder {
-    let blurb = r##"{"into":"ticks stub."}"##;
-    HttpResponse::Ok().body(blurb) 
+    let folder_url = state.folder_url.clone();
+    
+    // 1. Create an inner function that does the actual work of preparing the vector of tick
+    // requests. Inner function so it can be unit tested.
+    let req_urls = function::prepare_folder_requests(&folder_url, &query);
+
+    debug!("Request URLS: {:?}", &req_urls);
+
+    // 2. Take this vec of tick requests and map into a vec of request futures.
+
+    // 3. Turn the vec of request futures into a stream future.
+
+    // 4. Return as responder future.
+
+    let blurb = r##"{"into":"ticks stub. FINISH ME!"}"##;
+    HttpResponse::Ok().body(blurb)
 }
 
 #[derive(Debug)]

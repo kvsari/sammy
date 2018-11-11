@@ -1,9 +1,9 @@
 //! Payloads from binance.
+use std::num::NonZeroU64;
 
 use rust_decimal::Decimal;
-use chrono::{DateTime, Utc, NaiveDateTime};
 
-use common::{asset, trade};
+use common::{asset, trade, time_util};
 
 /// Similar to the `asset_amend` function in the subscription module. Will test the symbol
 /// string for particular matches where Binance has a different code from what exists in
@@ -17,17 +17,6 @@ fn asset_pair_parse(symbol: &str) -> Result<asset::Pair, asset::ParseAssetError>
         "ethusdt" | "ETHUSDT" => Ok(asset::ETH_USD),
         "btcusdt" | "BTCUSDT" => Ok(asset::BTC_USD),
         _ => symbol.parse(),
-    }
-}
-
-fn millisecond_timestamp_to_chrono(mts: u64) -> Option<DateTime<Utc>> {
-    if mts > 0 {
-        let seconds = (mts / 1000) as i64;
-        let millis = mts % 1000;
-        let nanos = (millis * 1000000) as u32;
-        Some(DateTime::from_utc(NaiveDateTime::from_timestamp(seconds, nanos), Utc))
-    } else {
-        None
     }
 }
 
@@ -84,7 +73,12 @@ impl Payload {
                 market_buyer,
                 ignore: _,
             } => Some(trade::TradeHistoryItem::new(
-                millisecond_timestamp_to_chrono(*event_time).expect("Invalid timestamp"),
+                if let Some(et) = NonZeroU64::new(*event_time) {
+                    time_util::millisecond_timestamp_to_chrono(et)
+                } else {
+                    // Perhaps we can instead use a timestamp of 1 millisecond?
+                    panic!("Invalid timestamp")
+                },
                 *quantity,
                 *price,
                 if *market_buyer {
@@ -97,8 +91,12 @@ impl Payload {
                 Some(*buyer_order_id as i64),
                 Some(*seller_order_id as i64),
                 Some(
-                    millisecond_timestamp_to_chrono(*trade_time)
-                        .expect("Invalid trade execution timestamp.")
+                    if let Some(tt) = NonZeroU64::new(*trade_time) {
+                        time_util::millisecond_timestamp_to_chrono(tt)
+                    } else {
+                        // Ditto.
+                        panic!("Invalid trade execution timestamp.")
+                    }
                 )),
             ),
             //_ => None,

@@ -45,7 +45,7 @@ fn main() {
         th_place_rx
             .map(|(ap, thi)| (ap, vec![thi]))
             .map_err(|e| error!("Receive failure: {:?}", &e))
-            .inspect(|tuple| println!("ITEMS: {:?}", &tuple)),
+            .inspect(|tuple| trace!("PLACING ITEMS: {:?}", &tuple)),
     );
 
     tokio::run(place_future);
