@@ -26,6 +26,54 @@ use common::tick::Tick;
 use model::TicksRequest;
 use function;
 
+pub fn generate_fold_future(url: &str) -> impl Future<Item = Tick, Error = FetchFoldError> {
+    client::get(url)
+        .finish()
+        .expect("Can't prepare client for folder request.")
+        .send()
+        .map_err(|e| {
+            error!("Fold fetch error: {}", &e);
+            FetchFoldError::Client(e)
+        })
+        .and_then(|response| {
+            trace!("RESPONSE: {:?}", &response);
+            response
+                .body()
+                .map_err(|e| {
+                    error!("Can't get response payload: {}", &e);
+                    FetchFoldError::Payload(e)
+                })
+        })
+        .and_then(|bytes: Bytes| {
+            trace!("RESPONSE BODY: {:?}", &bytes);
+            let tick: Tick = serde_json::from_slice(&bytes)
+                .map_err(|e| {
+                    error!("Failed to deserialize tick: {}", &e);
+                    FetchFoldError::Json(e)
+                })?;
+            Ok(tick)
+        })
+}
+
+macro_rules! fold_futures_responder {
+    ($fold_futures:expr) => {
+        iter_ok($fold_futures.into_iter())
+            .and_then(|fold_fut| fold_fut)
+            .fold(vec![], |mut ticks, tick| {
+                trace!("Tick: {:?}", &tick);
+                ticks.push(tick);
+                ok(ticks)
+            })
+            .and_then(|numbers| Ok(
+                HttpResponse::Ok()
+                    .header(header::CACHE_CONTROL, "no-cache")
+                    .json(numbers)
+            ))
+            .from_err()
+            .responder()
+    };
+}
+
 #[derive(Debug, Clone)]
 pub struct ServerState {
     folder_url: String,
@@ -43,18 +91,6 @@ pub fn info(_req: &HttpRequest<ServerState>) -> impl Responder {
     let blurb = r##"{"into":"Emit ticks."}"##;
     HttpResponse::Ok().body(blurb)
 }
-
-/*
-pub fn dummy_ticks_144(_req: &HttpRequest<State>) -> impl Responder {
-    let mut count = 0;
-    let numbers: Vec<String> = iter::repeat_with(move || { count += 1; count })
-        .take(144)
-        .map(|x| x.to_string())
-        .collect();
-    
-    HttpResponse::Ok().json(numbers)
-}
-*/
 
 pub fn ticks_last_24h_10_min_spans(
     req: &HttpRequest<ServerState>,
@@ -88,73 +124,32 @@ pub fn ticks_last_24h_10_min_spans(
         let url = format!(
             "{}/trade_history/btc/usd/tick?from={}&to={}", &folder_url, &start_ts, &end_ts
         );
-
-        let fold_fut = client::get(url.as_str())
-            .finish()
-            .expect("Can't prepare client for folder request.")
-            .send()
-            .map_err(|e| {
-                error!("Fold fetch error: {}", &e);
-                FetchFoldError::Client(e)
-            })
-            .and_then(|response| {
-                trace!("RESPONSE: {:?}", &response);
-                response
-                    .body()
-                    .map_err(|e| {
-                        error!("Can't get response payload: {}", &e);
-                        FetchFoldError::Payload(e)
-                    })
-            })
-            .and_then(|bytes: Bytes| {
-                trace!("RESPONSE BODY: {:?}", &bytes);
-                let tick: Tick = serde_json::from_slice(&bytes)
-                    .map_err(|e| {
-                        error!("Failed to deserialize tick: {}", &e);
-                        FetchFoldError::Json(e)
-                    })?;
-                Ok(tick)
-            });
-
-        fold_futures.push(fold_fut);
+        
+        fold_futures.push(generate_fold_future(url.as_str()));
     }
 
-    iter_ok(fold_futures.into_iter())
-        .and_then(|fold_fut| {
-            fold_fut
-        })
-        .fold(vec![], |mut ticks, tick| {
-            trace!("Tick: {:?}", &tick);
-            ticks.push(tick);
-            ok(ticks)
-        })
-        .and_then(|numbers| {
-            Ok(HttpResponse::Ok()
-               .header(header::CACHE_CONTROL, "no-cache")
-               .json(numbers)
-            )
-        })
-        .from_err()
-        .responder()
+    fold_futures_responder!(fold_futures)
 }
 
-pub fn ticks(state: State<ServerState>, query: Query<TicksRequest>) -> impl Responder {
+pub fn ticks(
+    state: State<ServerState>, query: Query<TicksRequest>
+) -> Box<Future<Item = HttpResponse, Error = error::Error>> {
     let folder_url = state.folder_url.clone();
     
     // 1. Create an inner function that does the actual work of preparing the vector of tick
     // requests. Inner function so it can be unit tested.
     let req_urls = function::prepare_folder_requests(&folder_url, &query);
 
-    debug!("Request URLS: {:?}", &req_urls);
+    //debug!("Request URLS: {:?}", &req_urls);
 
     // 2. Take this vec of tick requests and map into a vec of request futures.
-
     // 3. Turn the vec of request futures into a stream future.
-
     // 4. Return as responder future.
-
-    let blurb = r##"{"into":"ticks stub. FINISH ME!"}"##;
-    HttpResponse::Ok().body(blurb)
+    fold_futures_responder!(
+        req_urls
+            .into_iter()
+            .map(|url| generate_fold_future(url.as_str()))
+    )
 }
 
 #[derive(Debug)]

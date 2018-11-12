@@ -97,4 +97,91 @@ mod tests {
 
         assert!(params.is_empty());
     }
+
+    #[test]
+    fn generate_one_correct_link() {
+        let req = TicksRequest::_new(
+            exchange::Exchange::Binance,
+            asset::BTC_USD,
+            10,
+            Some(11),
+            1
+        );
+
+        let params = prepare_folder_requests("host", &req);
+        assert!(params.len() == 1);
+        assert_eq!(params[0], "host/trade_history/BTC/USD/binance/tick?from=10&to=11");
+
+        let req = TicksRequest::_new(
+            exchange::Exchange::Binance,
+            asset::BTC_USD,
+            10,
+            Some(21),
+            100
+        );
+
+        let params = prepare_folder_requests("host", &req);
+        assert!(params.len() == 1);
+        assert_eq!(params[0], "host/trade_history/BTC/USD/binance/tick?from=10&to=110");
+    }
+
+    #[test]
+    fn generate_two_correct_links() {
+        let req = TicksRequest::_new(
+            exchange::Exchange::Binance,
+            asset::BTC_USD,
+            10,
+            Some(12),
+            1
+        );
+
+        let params = prepare_folder_requests("host", &req);
+        assert!(params.len() == 2);
+        assert_eq!(params[0], "host/trade_history/BTC/USD/binance/tick?from=10&to=11");
+        assert_eq!(params[1], "host/trade_history/BTC/USD/binance/tick?from=11&to=12");
+
+        let req = TicksRequest::_new(
+            exchange::Exchange::Binance,
+            asset::BTC_USD,
+            10,
+            Some(20),
+            7
+        );
+
+        let params = prepare_folder_requests("host", &req);
+        assert!(params.len() == 2);
+        assert_eq!(params[0], "host/trade_history/BTC/USD/binance/tick?from=10&to=17");
+        assert_eq!(params[1], "host/trade_history/BTC/USD/binance/tick?from=17&to=24");
+    }
+
+    #[test]
+    fn generate_three_correct_links() {
+        let req = TicksRequest::_new(
+            exchange::Exchange::Binance,
+            asset::BTC_USD,
+            10,
+            Some(16),
+            2
+        );
+
+        let params = prepare_folder_requests("host", &req);
+        assert!(params.len() == 3);
+        assert_eq!(params[0], "host/trade_history/BTC/USD/binance/tick?from=10&to=12");
+        assert_eq!(params[1], "host/trade_history/BTC/USD/binance/tick?from=12&to=14");
+        assert_eq!(params[2], "host/trade_history/BTC/USD/binance/tick?from=14&to=16");
+
+        let req = TicksRequest::_new(
+            exchange::Exchange::Binance,
+            asset::BTC_USD,
+            10,
+            Some(20),
+            4
+        );
+
+        let params = prepare_folder_requests("host", &req);
+        assert!(params.len() == 3);
+        assert_eq!(params[0], "host/trade_history/BTC/USD/binance/tick?from=10&to=14");
+        assert_eq!(params[1], "host/trade_history/BTC/USD/binance/tick?from=14&to=18");
+        assert_eq!(params[2], "host/trade_history/BTC/USD/binance/tick?from=18&to=22");
+    }
 }
